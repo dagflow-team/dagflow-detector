@@ -6,7 +6,7 @@ from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib.Array import Array
 from dagflow.plot import plot_auto
-from reactornueosc.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
+from detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
 
 
 def test_EnergyResolutionSigmaRelABC_v01(debug_graph, testname):

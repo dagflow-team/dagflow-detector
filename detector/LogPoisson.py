@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING, Mapping
 
 from dagflow.meta_node import MetaNode
 
-from reactornueosc.LogPoissonConst import LogPoissonConst, ModeType
-from reactornueosc.LogPoissonMain import LogPoissonMain
+from detector.LogPoissonConst import LogPoissonConst, ModeType
+from detector.LogPoissonMain import LogPoissonMain
 
 if TYPE_CHECKING:
     from dagflow.node import Node

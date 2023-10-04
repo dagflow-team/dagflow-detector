@@ -8,7 +8,7 @@ from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib.Array import Array
 
-from reactornueosc.EnergyResolution import EnergyResolution
+from detector.EnergyResolution import EnergyResolution
 
 parnames = ("a_nonuniform", "b_stat", "c_noise")
 

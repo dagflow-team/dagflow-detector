@@ -9,7 +9,7 @@ from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib.Array import Array
 
-from reactornueosc.Monotonize import Monotonize
+from detector.Monotonize import Monotonize
 
 
 @mark.parametrize("direction", [+1, -1])

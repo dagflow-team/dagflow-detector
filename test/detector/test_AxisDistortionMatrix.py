@@ -4,7 +4,7 @@ from pytest import mark
 from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib import Array
-from reactornueosc.AxisDistortionMatrix import AxisDistortionMatrix
+from detector.AxisDistortionMatrix import AxisDistortionMatrix
 
 
 @mark.parametrize(

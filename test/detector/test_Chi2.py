@@ -6,8 +6,8 @@ from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib.Array import Array
 
-from reactornueosc.Chi2 import Chi2
-from reactornueosc.CNPStat import CNPStat
+from detector.Chi2 import Chi2
+from detector.CNPStat import CNPStat
 
 
 def test_Chi2_01(debug_graph, testname):

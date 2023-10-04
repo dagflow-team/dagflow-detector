@@ -8,8 +8,8 @@ from dagflow.storage import NodeStorage
 from dagflow.exception import ConnectionError
 from multikeydict.typing import KeyLike
 
-from reactornueosc.EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
-from reactornueosc.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
+from detector.EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
+from detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
 
 if TYPE_CHECKING:
     from dagflow.node import Node

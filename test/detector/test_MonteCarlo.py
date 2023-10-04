@@ -16,7 +16,7 @@ from dagflow.plot import plot_auto
 from dagflow.graphviz import savegraph
 from dagflow.lib import Array
 
-from reactornueosc.MonteCarlo import MonteCarlo
+from detector.MonteCarlo import MonteCarlo
 
 
 @mark.parametrize("scale", [0.1, 100.0, 10000.0])
