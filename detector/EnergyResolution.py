@@ -148,7 +148,10 @@ class EnergyResolution(MetaNode):
         _BinCenter = instance.add_BinCenter("BinCenter", labels.get("BinCenter", {}))
         nodes[key_BinCenter] = _BinCenter
         inputs[key_Edges] = _BinCenter.inputs[0]
-        outputs[key_BinCenter] = _BinCenter.outputs[0]
+        outputs[key_BinCenter] = (out_bincenter:=_BinCenter.outputs[0])
+
+        out_relsigma = _EnergyResolutionSigmaRelABC.outputs["RelSigma"]
+        out_bincenter >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
 
         label_int = labels.get("EnergyResolution", {})
         for key in replicate:
@@ -159,6 +162,8 @@ class EnergyResolution(MetaNode):
             nodes[key_EnergyResolutionMatrixBC + key] = eres
             inputs[key_EnergyResolutionMatrixBC + key] = eres.inputs["Edges"]
             outputs[key_EnergyResolutionMatrixBC + key] = eres.outputs[0]
+
+            out_relsigma >> eres.inputs["RelSigma"]
 
         NodeStorage.update_current(storage, strict=True)
         return instance, storage
