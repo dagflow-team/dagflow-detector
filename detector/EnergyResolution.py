@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Mapping, Optional, Tuple
 
 from dagflow.lib import BinCenter
-from dagflow.meta_node import MetaNode
+from dagflow.metanode import MetaNode
 from dagflow.storage import NodeStorage
 from dagflow.exception import ConnectionError
 from multikeydict.typing import KeyLike
