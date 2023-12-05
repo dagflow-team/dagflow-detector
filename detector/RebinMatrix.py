@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
+from dagflow.exception import InitializationError
 from dagflow.nodes import FunctionNode
+from numba import njit
 from numpy import isclose
 from numpy.typing import NDArray
 
@@ -8,32 +10,35 @@ if TYPE_CHECKING:
     from dagflow.input import Input
     from dagflow.output import Output
 
-# TODO: solve a problem of non-conserving integrals or sums
+
+RebinModes = {"python", "numba"}
+RebinModesType = Literal[RebinModes]
+
 
 class RebinMatrix(FunctionNode):
     """For a given `edges_old` and `edges_new` computes the conversion matrix"""
 
-    __slots__ = (
-        "_edges_old",
-        "_edges_new",
-        "_result",
-        "_atol",
-        "_rtol",
-    )
+    __slots__ = ("_edges_old", "_edges_new", "_result", "_atol", "_rtol", "_mode")
 
     _edges_old: "Input"
     _edges_new: "Input"
     _result: "Output"
     _atol: float
     _rtol: float
+    _mode: str
 
-    def __init__(self, *args, rtol: float = 0.0, atol: float = 1e-14, **kwargs):
+    def __init__(
+        self, *args, rtol: float = 0.0, atol: float = 1e-14, mode: RebinModesType = "python", **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.labels.setdefaults(
             {
                 "text": "Bin edges conversion matrix",
             }
         )
+        if mode not in RebinModes:
+            raise InitializationError(f"mode must be in {RebinModes}, but given {mode}!", node=self)
+        self._mode = mode
         self._atol = atol
         self._rtol = rtol
         self._edges_old = self._add_input("EdgesOld", positional=False)
@@ -42,19 +47,31 @@ class RebinMatrix(FunctionNode):
         self._functions.update(
             {
                 "python": self._fcn_python,
-                # "numba": self._fcn_numba,
+                "numba": self._fcn_numba,
             }
         )
 
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    @property
+    def atol(self) -> float:
+        return self._atol
+
+    @property
+    def rtol(self) -> float:
+        return self._rtol
+
     def _fcn_python(self):
         _calc_rebin_matrix_python(
-            self._edges_old.data, self._edges_new.data, self._result.data, self._atol, self._rtol
+            self._edges_old.data, self._edges_new.data, self._result.data, self.atol, self.rtol
         )
 
-    #def _fcn_numba(self):
-    #    _calc_rebin_matrix_numba(
-    #        self._edges_old.data, self._edges_new.data, self._result.data, self._atol, self._rtol
-    #    )
+    def _fcn_numba(self):
+        _calc_rebin_matrix_numba(
+            self._edges_old.data, self._edges_new.data, self._result.data, self.atol, self.rtol
+        )
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
@@ -62,7 +79,7 @@ class RebinMatrix(FunctionNode):
         check_input_dimension(self, ("EdgesOld", "EdgesNew"), 1)
         self._result.dd.shape = (self._edges_new.dd.size - 1, self._edges_old.dd.size - 1)
         self._result.dd.dtype = "d"
-        self.fcn = self._functions["python"]
+        self.fcn = self._functions[self.mode]
 
 
 def _calc_rebin_matrix_python(
@@ -92,21 +109,49 @@ def _calc_rebin_matrix_python(
 
             iold, edge_old = next(stepper_old)
             if iold >= nold:
-                print("Old:", edges_old.size, edges_old)
-                print("New:", edges_new.size, edges_new)
+                # print("Old:", edges_old.size, edges_old)
+                # print("New:", edges_new.size, edges_new)
                 raise RuntimeError(f"Inconsistent edges (outer): {iold} {edge_old}, {inew} {edge_new}")
 
-        # TODO: maybe allow to the lastest new bin differs from the old one?
-        #       it helps to keep integrals and sum of bins
         if not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
-            print("Old:", edges_old.size, edges_old)
-            print("New:", edges_new.size, edges_new)
+            # print("Old:", edges_old.size, edges_old)
+            # print("New:", edges_new.size, edges_new)
             raise RuntimeError(f"Inconsistent edges (inner): {iold} {edge_old}, {inew} {edge_new}")
 
-# TODO: redesign code (get rid of asserts) to implement a numba-method
-# from typing import Callable  # fmt:skip
-# from numba import njit
-#
-# _calc_rebin_matrix_numba: Callable[[NDArray, NDArray, NDArray, float, float], None] = njit(cache=True)(
-#    _calc_rebin_matrix_python
-# )
+
+@njit(cache=True)
+def _calc_rebin_matrix_numba(
+    edges_old: NDArray, edges_new: NDArray, rebin_matrix: NDArray, atol: float, rtol: float
+) -> None:
+    """
+    For a column C of size N: Cnew = M C
+    Cnew = [Mx1]
+    M = [MxN]
+    C = [Nx1]
+    """
+    assert edges_new[0] >= edges_old[0] or isclose(edges_new[0], edges_old[0], atol=atol, rtol=rtol)
+    assert edges_new[-1] <= edges_old[-1] or isclose(edges_new[-1], edges_old[-1], atol=atol, rtol=rtol)
+
+    inew = 0
+    iold = 0
+    nold = edges_old.size
+    edge_old = edges_old[0]
+    edge_new_prev = edges_new[0]
+
+    stepper_old = enumerate(edges_old)
+    iold, edge_old = next(stepper_old)
+    for inew, edge_new in enumerate(edges_new[1:], 1):
+        while edge_old < edge_new and not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
+            if edge_old >= edge_new_prev or isclose(edge_old, edge_new_prev, atol=atol, rtol=rtol):
+                rebin_matrix[inew - 1, iold] = 1.0
+
+            iold, edge_old = next(stepper_old)
+            assert iold < nold
+            #    print("Old:", edges_old.size, edges_old)
+            #    print("New:", edges_new.size, edges_new)
+            #    raise RuntimeError(f"Inconsistent edges (outer): {iold} {edge_old}, {inew} {edge_new}")
+
+        assert isclose(edge_new, edge_old, atol=atol, rtol=rtol)
+        #    print("Old:", edges_old.size, edges_old)
+        #    print("New:", edges_new.size, edges_new)
+        #    raise RuntimeError(f"Inconsistent edges (inner): {iold} {edge_old}, {inew} {edge_new}")
