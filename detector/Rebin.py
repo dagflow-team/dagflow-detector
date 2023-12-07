@@ -25,7 +25,7 @@ class Rebin(MetaNode):
         *,
         bare: bool = False,
         mode: RebinModesType = "numba",
-        atol: float = 0,
+        atol: float = 0.0,
         rtol: float = 1e-14,
         labels: Mapping = {},
     ):
@@ -49,7 +49,7 @@ class Rebin(MetaNode):
         self,
         name: str = "RebinMatrix",
         mode: RebinModesType = "numba",
-        atol: float = 0,
+        atol: float = 0.0,
         rtol: float = 1e-14,
         label: Mapping = {},
     ) -> RebinMatrix:

@@ -43,7 +43,7 @@ def test_Rebin(testname, m, dtype, mode):
     assert all(y_res == y_new)
     # NOTE: only for current edges_new! for other binning it may not coincide!
     rtol = finfo(dtype).resolution
-    assert isclose(y_old.sum(), y_new.sum(), atol=0, rtol=rtol)
+    assert isclose(y_old.sum(), y_new.sum(), atol=0.0, rtol=rtol)
 
     # plots
     plot_array_1d(array=y_old, edges=edges_old, yerr=0.5, color="blue")
