@@ -28,9 +28,9 @@ class RebinMatrix(FunctionNode):
     _mode: str
 
     def __init__(
-        self, *args, rtol: float = 0.0, atol: float = 1e-14, mode: RebinModesType = "python", **kwargs
+        self, *args, rtol: float = 0.0, atol: float = 1e-14, mode: RebinModesType = "numba", **kwargs
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, allowed_kw_inputs=("EdgesOld", "EdgesNew"))
         self.labels.setdefaults(
             {
                 "text": "Bin edges conversion matrix",
@@ -43,7 +43,7 @@ class RebinMatrix(FunctionNode):
         self._rtol = rtol
         self._edges_old = self._add_input("EdgesOld", positional=False)
         self._edges_new = self._add_input("EdgesNew", positional=False)
-        self._result = self._add_output("matrix")  # output: 0
+        self._result = self._add_output("Matrix")  # output: 0
         self._functions.update(
             {
                 "python": self._fcn_python,

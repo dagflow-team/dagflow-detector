@@ -1,36 +1,46 @@
-from numpy import finfo, isclose, linspace, matmul, isclose
+from numpy import finfo, isclose, linspace, matmul
 from pytest import mark, raises
 
 from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib import Array
 from dagflow.plot import closefig, plot_array_1d, savefig
+
+from detector.Rebin import Rebin
 from detector.RebinMatrix import RebinMatrix
 
 
 @mark.parametrize("dtype", ("d", "f"))
 @mark.parametrize("m", (2, 4))
 @mark.parametrize("mode", ("python", "numba"))
-def test_RebinMatrix(testname, m, dtype, mode):
+def test_Rebin(testname, m, dtype, mode):
     n = 21
     edges_old = linspace(0.0, 2.0, n, dtype=dtype)
     edges_new = edges_old[::m]
+    y_old = linspace(2.0, 0.0, n - 1, dtype=dtype)
 
     with Graph(close=True) as graph:
         EdgesOld = Array("EdgesOld", edges_old)
         EdgesNew = Array("EdgesNew", edges_new)
-        mat = RebinMatrix("Rebin Matrix", mode=mode)
-        EdgesOld >> mat("EdgesOld")
-        EdgesNew >> mat("EdgesNew")
+        Y = Array("Y", y_old)
+        metanode = Rebin(mode=mode)
+        # connect by metanode.inputs
+        EdgesOld >> metanode.inputs["EdgesOld"]
+        EdgesNew >> metanode.inputs["EdgesNew"]
+        Y >> metanode.inputs["vector"]
+        # or connect by certain node
+        # EdgesOld >> metanode("EdgesOld", nodename="RebinMatrix")
+        # EdgesNew >> metanode("EdgesNew", nodename="RebinMatrix")
+        # Y >> metanode("vector", nodename="VectorMatrixProduct")
 
-    res = mat.get_data()
-    ressum = res.sum(axis=0)
+    mat = metanode.outputs["Matrix"].data
     # NOTE: Asserts below are only for current edges_new! For other binning it may not coincide!
-    assert (ressum == 1).all()
-    assert ressum.sum() == n - 1
+    assert (mat.sum(axis=0) == 1).all()
+    assert mat.sum(axis=0).sum() == n - 1
 
-    y_old = linspace(2.0, 0.0, n - 1, dtype=dtype)
-    y_new = matmul(res, y_old)
+    y_new = metanode.outputs["result"].data
+    y_res = matmul(mat, y_old)
+    assert all(y_res == y_new)
     # NOTE: only for current edges_new! for other binning it may not coincide!
     rtol = finfo(dtype).resolution
     assert isclose(y_old.sum(), y_new.sum(), atol=0, rtol=rtol)
