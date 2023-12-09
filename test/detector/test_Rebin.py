@@ -20,20 +20,20 @@ def test_Rebin(testname, m, dtype, mode):
     y_old = linspace(2.0, 0.0, n - 1, dtype=dtype)
 
     with Graph(close=True) as graph:
-        EdgesOld = Array("EdgesOld", edges_old)
-        EdgesNew = Array("EdgesNew", edges_new)
+        EdgesOld = Array("edges_old", edges_old)
+        EdgesNew = Array("edges_new", edges_new)
         Y = Array("Y", y_old)
         metanode = Rebin(mode=mode)
         # connect by metanode.inputs
-        EdgesOld >> metanode.inputs["EdgesOld"]
-        EdgesNew >> metanode.inputs["EdgesNew"]
+        EdgesOld >> metanode.inputs["edges_old"]
+        EdgesNew >> metanode.inputs["edges_new"]
         Y >> metanode.inputs["vector"]
         # or connect by certain node
-        # EdgesOld >> metanode("EdgesOld", nodename="RebinMatrix")
-        # EdgesNew >> metanode("EdgesNew", nodename="RebinMatrix")
+        # edges_old >> metanode("edges_old", nodename="RebinMatrix")
+        # edges_new >> metanode("edges_new", nodename="RebinMatrix")
         # Y >> metanode("vector", nodename="VectorMatrixProduct")
 
-    mat = metanode.outputs["Matrix"].data
+    mat = metanode.outputs["matrix"].data
     # NOTE: Asserts below are only for current edges_new! For other binning it may not coincide!
     assert (mat.sum(axis=0) == 1).all()
     assert mat.sum(axis=0).sum() == n - 1
@@ -66,10 +66,10 @@ def test_Rebin(testname, m, dtype, mode):
 def test_RebinMatrix_wrong_edges_new(edges_new):
     edges_old = linspace(0.0, 2.0, 21)
     with Graph(close=True):
-        EdgesOld = Array("EdgesOld", edges_old)
-        EdgesNew = Array("EdgesNew", edges_new)
+        EdgesOld = Array("edges_old", edges_old)
+        EdgesNew = Array("edges_new", edges_new)
         mat = RebinMatrix("Rebin Matrix")
-        EdgesOld >> mat("EdgesOld")
-        EdgesNew >> mat("EdgesNew")
+        EdgesOld >> mat("edges_old")
+        EdgesNew >> mat("edges_new")
     with raises(Exception):
         mat.get_data()

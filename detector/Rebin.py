@@ -57,8 +57,8 @@ class Rebin(MetaNode):
         self._RebinMatrixList.append(_RebinMatrix)
         self._add_node(
             _RebinMatrix,
-            kw_inputs=["EdgesOld", "EdgesNew"],
-            kw_outputs=["Matrix"],
+            kw_inputs=["edges_old", "edges_new"],
+            kw_outputs=["matrix"],
             missing_inputs=True,
             also_missing_outputs=True,
         )
@@ -88,7 +88,7 @@ class Rebin(MetaNode):
         for _VectorMatrixProduct, _RebinMatrix in zip(
             self._VectorMatrixProductList, self._RebinMatrixList
         ):
-            _RebinMatrix.outputs["Matrix"] >> _VectorMatrixProduct.inputs["matrix"]
+            _RebinMatrix.outputs["matrix"] >> _VectorMatrixProduct.inputs["matrix"]
 
     @classmethod
     def replicate(
@@ -130,7 +130,7 @@ class Rebin(MetaNode):
             inputs[key_VectorMatixProduct + (iname,)] = input
         outputs[key_VectorMatixProduct] = _VectorMatrixProduct.outputs["result"]
 
-        _RebinMatrix.outputs["Matrix"] >> _VectorMatrixProduct.inputs["matrix"]
+        _RebinMatrix.outputs["matrix"] >> _VectorMatrixProduct.inputs["matrix"]
 
         label_int = labels.get("Rebin", {})
         for key in replicate:
@@ -143,7 +143,7 @@ class Rebin(MetaNode):
             for iname, input in _VectorMatrixProduct.inputs.iter_kw_items():
                 inputs[name + (iname,)] = input
             outputs[name] = _VectorMatrixProduct.outputs["result"]
-            _RebinMatrix.outputs["Matrix"] >> _VectorMatrixProduct.inputs["matrix"]
+            _RebinMatrix.outputs["matrix"] >> _VectorMatrixProduct.inputs["matrix"]
 
         NodeStorage.update_current(storage, strict=True)
         return instance, storage

@@ -30,10 +30,10 @@ class RebinMatrix(FunctionNode):
     def __init__(
         self, *args, rtol: float = 0.0, atol: float = 1e-14, mode: RebinModesType = "numba", **kwargs
     ):
-        super().__init__(*args, **kwargs, allowed_kw_inputs=("EdgesOld", "EdgesNew"))
+        super().__init__(*args, **kwargs, allowed_kw_inputs=("edges_old", "edges_new"))
         self.labels.setdefaults(
             {
-                "text": "Bin edges conversion matrix",
+                "text": "Matrix for rebinning",
             }
         )
         if mode not in RebinModes:
@@ -41,9 +41,9 @@ class RebinMatrix(FunctionNode):
         self._mode = mode
         self._atol = atol
         self._rtol = rtol
-        self._edges_old = self._add_input("EdgesOld", positional=False)
-        self._edges_new = self._add_input("EdgesNew", positional=False)
-        self._result = self._add_output("Matrix")  # output: 0
+        self._edges_old = self._add_input("edges_old", positional=False)
+        self._edges_new = self._add_input("edges_new", positional=False)
+        self._result = self._add_output("matrix")  # output: 0
         self._functions.update(
             {
                 "python": self._fcn_python,
@@ -76,7 +76,7 @@ class RebinMatrix(FunctionNode):
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
         from dagflow.typefunctions import check_input_dimension  # fmt:skip
-        check_input_dimension(self, ("EdgesOld", "EdgesNew"), 1)
+        check_input_dimension(self, ("edges_old", "edges_new"), 1)
         self._result.dd.shape = (self._edges_new.dd.size - 1, self._edges_old.dd.size - 1)
         self._result.dd.dtype = "d"
         self.fcn = self._functions[self.mode]
