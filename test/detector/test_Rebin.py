@@ -63,12 +63,13 @@ def test_Rebin(testname, m, dtype, mode):
         linspace(0.0, 2.0, 10),
     ),
 )
-def test_RebinMatrix_wrong_edges_new(edges_new):
+@mark.parametrize("mode", ("python", "numba"))
+def test_RebinMatrix_wrong_edges_new(edges_new, mode):
     edges_old = linspace(0.0, 2.0, 21)
     with Graph(close=True):
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)
-        mat = RebinMatrix("Rebin Matrix")
+        mat = RebinMatrix("Rebin Matrix", mode=mode)
         EdgesOld >> mat("edges_old")
         EdgesNew >> mat("edges_new")
     with raises(Exception):

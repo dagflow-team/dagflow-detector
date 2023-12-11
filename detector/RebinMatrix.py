@@ -1,10 +1,12 @@
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Callable, Literal, Tuple
 
-from dagflow.exception import InitializationError
-from dagflow.nodes import FunctionNode
 from numba import njit
 from numpy import isclose
 from numpy.typing import NDArray
+
+from dagflow.exception import InitializationError
+from dagflow.nodes import FunctionNode
+from dagflow.typefunctions import assign_output_edges, check_input_dimension
 
 if TYPE_CHECKING:
     from dagflow.input import Input
@@ -64,41 +66,54 @@ class RebinMatrix(FunctionNode):
         return self._rtol
 
     def _fcn_python(self):
-        _calc_rebin_matrix_python(
+        ret = _calc_rebin_matrix_python(
             self._edges_old.data, self._edges_new.data, self._result.data, self.atol, self.rtol
         )
+        if ret[0] > 0:
+            self.__raise_exception_at_wrong_edges(*ret)
 
     def _fcn_numba(self):
-        _calc_rebin_matrix_numba(
+        ret = _calc_rebin_matrix_numba(
             self._edges_old.data, self._edges_new.data, self._result.data, self.atol, self.rtol
         )
+        if ret[0] > 0:
+            self.__raise_exception_at_wrong_edges(*ret)
+
+    def __raise_exception_at_wrong_edges(self, retcode, iold, edge_old, inew, edge_new) -> None:
+        print("Old edges:", self._edges_old.dd.size, self._edges_old.data)
+        print("New edges:", self._edges_new.dd.size, self._edges_new.data)
+        edges_kind = "outer" if retcode == 1 else "inner"
+        raise RuntimeError(f"Inconsistent edges ({edges_kind}): {iold} {edge_old}, {inew} {edge_new}")
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
-        from dagflow.typefunctions import check_input_dimension  # fmt:skip
         check_input_dimension(self, ("edges_old", "edges_new"), 1)
         self._result.dd.shape = (self._edges_new.dd.size - 1, self._edges_old.dd.size - 1)
         self._result.dd.dtype = "d"
         self.fcn = self._functions[self.mode]
+        assign_output_edges((self._edges_new, self._edges_old), self._result)
 
 
 def _calc_rebin_matrix_python(
     edges_old: NDArray, edges_new: NDArray, rebin_matrix: NDArray, atol: float, rtol: float
-) -> None:
+) -> Tuple[int, int, float, int, float]:
     """
     For a column C of size N: Cnew = M C
     Cnew = [Mx1]
     M = [MxN]
     C = [Nx1]
     """
-    assert edges_new[0] >= edges_old[0] or isclose(edges_new[0], edges_old[0], atol=atol, rtol=rtol)
-    assert edges_new[-1] <= edges_old[-1] or isclose(edges_new[-1], edges_old[-1], atol=atol, rtol=rtol)
+
+    if edges_new[0] < edges_old[0] or not isclose(edges_new[0], edges_old[0], atol=atol, rtol=rtol):
+        return 1, 0, edges_old[0], 0, edges_new[0]
+    if edges_new[-1] > edges_old[-1] or not isclose(edges_new[-1], edges_old[-1], atol=atol, rtol=rtol):
+        return 2, -1, edges_old[-1], -1, edges_new[-1]
 
     inew = 0
     iold = 0
-    nold = edges_old.size
     edge_old = edges_old[0]
     edge_new_prev = edges_new[0]
+    nold = edges_old.size
 
     stepper_old = enumerate(edges_old)
     iold, edge_old = next(stepper_old)
@@ -109,49 +124,14 @@ def _calc_rebin_matrix_python(
 
             iold, edge_old = next(stepper_old)
             if iold >= nold:
-                # print("Old:", edges_old.size, edges_old)
-                # print("New:", edges_new.size, edges_new)
-                raise RuntimeError(f"Inconsistent edges (outer): {iold} {edge_old}, {inew} {edge_new}")
+                return 1, iold, edge_old, inew, edge_new_prev
 
         if not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
-            # print("Old:", edges_old.size, edges_old)
-            # print("New:", edges_new.size, edges_new)
-            raise RuntimeError(f"Inconsistent edges (inner): {iold} {edge_old}, {inew} {edge_new}")
+            return 2, iold, edge_old, inew, edge_new_prev
+
+    return 0, iold, edge_old, inew, edge_new_prev
 
 
-@njit(cache=True)
-def _calc_rebin_matrix_numba(
-    edges_old: NDArray, edges_new: NDArray, rebin_matrix: NDArray, atol: float, rtol: float
-) -> None:
-    """
-    For a column C of size N: Cnew = M C
-    Cnew = [Mx1]
-    M = [MxN]
-    C = [Nx1]
-    """
-    assert edges_new[0] >= edges_old[0] or isclose(edges_new[0], edges_old[0], atol=atol, rtol=rtol)
-    assert edges_new[-1] <= edges_old[-1] or isclose(edges_new[-1], edges_old[-1], atol=atol, rtol=rtol)
-
-    inew = 0
-    iold = 0
-    nold = edges_old.size
-    edge_old = edges_old[0]
-    edge_new_prev = edges_new[0]
-
-    stepper_old = enumerate(edges_old)
-    iold, edge_old = next(stepper_old)
-    for inew, edge_new in enumerate(edges_new[1:], 1):
-        while edge_old < edge_new and not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
-            if edge_old >= edge_new_prev or isclose(edge_old, edge_new_prev, atol=atol, rtol=rtol):
-                rebin_matrix[inew - 1, iold] = 1.0
-
-            iold, edge_old = next(stepper_old)
-            assert iold < nold
-            #    print("Old:", edges_old.size, edges_old)
-            #    print("New:", edges_new.size, edges_new)
-            #    raise RuntimeError(f"Inconsistent edges (outer): {iold} {edge_old}, {inew} {edge_new}")
-
-        assert isclose(edge_new, edge_old, atol=atol, rtol=rtol)
-        #    print("Old:", edges_old.size, edges_old)
-        #    print("New:", edges_new.size, edges_new)
-        #    raise RuntimeError(f"Inconsistent edges (inner): {iold} {edge_old}, {inew} {edge_new}")
+_calc_rebin_matrix_numba: Callable[
+    [NDArray, NDArray, NDArray, float, float], Tuple[int, int, float, int, float]
+] = njit(cache=True)(_calc_rebin_matrix_python)
