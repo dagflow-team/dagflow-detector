@@ -1,13 +1,22 @@
-from numpy import finfo, isclose, linspace, matmul
+from numpy import allclose, finfo, linspace, matmul
+from numpy.typing import NDArray
 from pytest import mark, raises
 
 from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib import Array
 from dagflow.plot import closefig, plot_array_1d, savefig
-
 from detector.Rebin import Rebin
 from detector.RebinMatrix import RebinMatrix
+
+
+def partial_sum(y_old: NDArray, m: int) -> list:
+    psum = []
+    i = 0
+    while i < y_old.size:
+        psum.append(y_old[i : i + m].sum())
+        i += m
+    return psum
 
 
 @mark.parametrize("dtype", ("d", "f"))
@@ -41,9 +50,9 @@ def test_Rebin(testname, m, dtype, mode):
     y_new = metanode.outputs["result"].data
     y_res = matmul(mat, y_old)
     assert all(y_res == y_new)
-    # NOTE: only for current edges_new! for other binning it may not coincide!
+
     rtol = finfo(dtype).resolution
-    assert isclose(y_old.sum(), y_new.sum(), atol=0.0, rtol=rtol)
+    assert allclose(partial_sum(y_old, m), y_new, atol=0.0, rtol=rtol)
 
     # plots
     plot_array_1d(array=y_old, edges=edges_old, yerr=0.5, color="blue")
