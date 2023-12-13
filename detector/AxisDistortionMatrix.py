@@ -80,6 +80,8 @@ class AxisDistortionMatrix(FunctionNode):
         eval_output_dtype(self, names_edges, "matrix")
 
         self._result.dd.shape = (nedges - 1, nedges - 1)
+        edges = self._edges_original.parent_output
+        self._result.dd.axes_edges = [edges, edges]
         self.fcn = self._functions["numba"]
 
 
