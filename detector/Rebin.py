@@ -71,11 +71,14 @@ class Rebin(MetaNode):
         self._VectorMatrixProductList.append(_VectorMatrixProduct)
         self._add_node(
             _VectorMatrixProduct,
-            kw_inputs=["vector", "matrix"],
-            kw_outputs=["result"],
+            inputs_pos=True,
+            outputs_pos=True,
+            kw_inputs=["matrix"],
             missing_inputs=True,
             also_missing_outputs=True,
+            merge_inputs=["matrix"]
         )
+        self._leading_node = _VectorMatrixProduct
         return _VectorMatrixProduct
 
     def _bind_outputs(self) -> None:
