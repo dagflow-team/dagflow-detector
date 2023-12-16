@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Callable, Literal, Tuple
 
 from numba import njit
-from numpy import isclose
+from numpy import finfo, isclose
 from numpy.typing import NDArray
 
 from dagflow.exception import InitializationError
@@ -30,7 +30,12 @@ class RebinMatrix(FunctionNode):
     _mode: str
 
     def __init__(
-        self, *args, rtol: float = 0.0, atol: float = 1e-14, mode: RebinModesType = "numba", **kwargs
+        self,
+        *args,
+        rtol: float = 0.0,
+        atol: float = finfo("d").resolution,
+        mode: RebinModesType = "numba",
+        **kwargs,
     ):
         super().__init__(*args, **kwargs, allowed_kw_inputs=("edges_old", "edges_new"))
         self.labels.setdefaults(
@@ -43,8 +48,8 @@ class RebinMatrix(FunctionNode):
         self._mode = mode
         self._atol = atol
         self._rtol = rtol
-        self._edges_old = self._add_input("edges_old", positional=False)
-        self._edges_new = self._add_input("edges_new", positional=False)
+        self._edges_old = self._add_input("edges_old")  # input: 0
+        self._edges_new = self._add_input("edges_new")  # input: 1
         self._result = self._add_output("matrix")  # output: 0
         self._functions.update(
             {

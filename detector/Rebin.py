@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Mapping, Optional, Tuple
 
+from numpy import finfo
+
 from dagflow.exception import ConnectionError
 from dagflow.lib import VectorMatrixProduct
 from dagflow.metanode import MetaNode
 from dagflow.storage import NodeStorage
-from multikeydict.typing import KeyLike
-
 from detector.RebinMatrix import RebinMatrix, RebinModesType
+from multikeydict.typing import KeyLike
 
 if TYPE_CHECKING:
     from dagflow.node import Node
@@ -26,7 +27,7 @@ class Rebin(MetaNode):
         bare: bool = False,
         mode: RebinModesType = "numba",
         atol: float = 0.0,
-        rtol: float = 1e-14,
+        rtol: float = finfo("d").resolution,
         labels: Mapping = {},
     ):
         super().__init__()
@@ -50,7 +51,7 @@ class Rebin(MetaNode):
         name: str = "RebinMatrix",
         mode: RebinModesType = "numba",
         atol: float = 0.0,
-        rtol: float = 1e-14,
+        rtol: float = finfo("d").resolution,
         label: Mapping = {},
     ) -> RebinMatrix:
         _RebinMatrix = RebinMatrix(name=name, mode=mode, atol=atol, rtol=rtol, label=label)
@@ -74,9 +75,9 @@ class Rebin(MetaNode):
             inputs_pos=True,
             outputs_pos=True,
             kw_inputs=["matrix"],
+            merge_inputs=["matrix"],
             missing_inputs=True,
             also_missing_outputs=True,
-            merge_inputs=["matrix"]
         )
         self._leading_node = _VectorMatrixProduct
         return _VectorMatrixProduct
@@ -84,7 +85,7 @@ class Rebin(MetaNode):
     def _bind_outputs(self) -> None:
         if (l1 := len(self._VectorMatrixProductList)) != (l2 := len(self._RebinMatrixList)):
             raise ConnectionError(
-                "Cannot bind outputs! Nodes must be deuces of (VectorMatrixProduct, RebinMatrix), "
+                "Cannot bind outputs! Nodes must be pairs of (VectorMatrixProduct, RebinMatrix), "
                 f"but current lengths are {l1}, {l2}!",
                 node=self,
             )
