@@ -108,4 +108,4 @@ class EnergyResolutionMatrixBC(FunctionNode):
         self._SmearMatrix.dd.shape = (RelSigmadd.shape[0], RelSigmadd.shape[0])
         self._SmearMatrix.dd.dtype = RelSigmadd.dtype
         edges = self._Edges._parent_output
-        self._SmearMatrix.dd.axes_edges = [edges, edges]
+        self._SmearMatrix.dd.axes_edges = (edges, edges)
