@@ -58,10 +58,7 @@ def test_AxisDistortionMatrix(setname: str, dtype: str):
     ressum = res.sum(axis=0)
     print(res)
     print(ressum)
-    if dtype == "d":
-        atol = 0
-    else:
-        atol = finfo(dtype).resolution * 0.5
+    atol = 0 if dtype == "d" else finfo(dtype).resolution * 0.5
     assert allclose(res, desired, atol=atol, rtol=0)
 
     idxstart, idxend = 0, nbins
@@ -70,6 +67,10 @@ def test_AxisDistortionMatrix(setname: str, dtype: str):
     while idxend > 0 and ressum[idxend - 1] < 1.0:
         idxend -= 1
     assert allclose(ressum[idxstart:idxend], 1, rtol=0, atol=0)
+
+    out_edges = mat.outputs[0].dd.axes_edges
+    assert out_edges[0] is out_edges[1]
+    assert out_edges[0] is Edges.outputs[0]
 
     savegraph(graph, f"output/test_AxisDistortionMatrix_{dtype}.png")
 

@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-from pytest import mark
 from matplotlib import pyplot as plt
 from numpy import arange, digitize, fabs, geomspace, ndarray, zeros
+from pytest import mark
 
 from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib.Array import Array
-
 from detector.EnergyResolution import EnergyResolution
 
 parnames = ("a_nonuniform", "b_stat", "c_noise")
@@ -49,7 +48,7 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
         ereses = []
         for i, energies in enumerate(Energy_set):
             phist_in = singularities(energies, Edges_in)
-            hist_in = Array(f"Energy_{i}", phist_in, edges=[edges.outputs["array"]])
+            Array(f"Energy_{i}", phist_in, edges=[edges.outputs["array"]])
             eres = EnergyResolution()
             for name, inp in zip(parnames, (a, b, c)):
                 inp >> eres.inputs[name]
@@ -60,12 +59,15 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
     for i, eres in enumerate(ereses):
         centers_in = eres.outputs["Energy"].data
         assert all(RelSigma(centers_in) == eres.inputs["RelSigma"].data)
-        mat = eres.outputs["SmearMatrix"].data
-        check_smearing_projection(mat)
+        mat = eres.outputs["SmearMatrix"]
+        mat_edges = mat.dd.axes_edges
+        assert mat_edges[0] is mat_edges[1]
+        assert mat_edges[0] is edges.outputs[0]
+        check_smearing_projection(mat.data)
 
         plt.figure()
         plt.grid()
-        plt.plot(centers_in, mat @ centers_in, "+")
+        plt.plot(centers_in, mat.data @ centers_in, "+")
         plt.xlabel("Energy")
         plt.savefig(f"output/{testname}_{i}.png")
         plt.close()
