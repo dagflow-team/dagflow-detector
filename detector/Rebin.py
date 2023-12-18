@@ -119,16 +119,17 @@ class Rebin(MetaNode):
 
         _RebinMatrix = instance.add_RebinMatrix(
             name_RebinMatrix,
-            labels.get("RebinMatrix", {}),
+            label = labels.get("RebinMatrix", {}),
         )
         nodes[key_RebinMatrix] = _RebinMatrix
         for iname, input in _RebinMatrix.inputs.iter_kw_items():
             inputs[key_RebinMatrix + (iname,)] = input
-        outputs[key_RebinMatrix] = _RebinMatrix.outputs["RebinMatrix"]
+        outputs[key_RebinMatrix] = _RebinMatrix.outputs["matrix"]
 
         _VectorMatrixProduct = instance.add_VectorMatrixProduct(
             "VectorMatrixProduct", labels.get("VectorMatrixProduct", {})
         )
+        _VectorMatrixProduct()
         nodes[key_VectorMatixProduct] = _VectorMatrixProduct
         for iname, input in _VectorMatrixProduct.inputs.iter_kw_items():
             inputs[key_VectorMatixProduct + (iname,)] = input
