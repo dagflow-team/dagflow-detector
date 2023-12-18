@@ -61,8 +61,8 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
         assert all(RelSigma(centers_in) == eres.inputs["RelSigma"].data)
         mat = eres.outputs["SmearMatrix"]
         mat_edges = mat.dd.axes_edges
-        assert mat_edges[0] == mat_edges[1]
-        assert all(Edges_in == mat_edges[0].data)
+        assert mat_edges[0] is mat_edges[1]
+        assert mat_edges[0] is edges.outputs[0]
         check_smearing_projection(mat.data)
 
         plt.figure()

@@ -69,8 +69,8 @@ def test_AxisDistortionMatrix(setname: str, dtype: str):
     assert allclose(ressum[idxstart:idxend], 1, rtol=0, atol=0)
 
     out_edges = mat.outputs[0].dd.axes_edges
-    assert out_edges[0] == out_edges[1]
-    assert all(out_edges[0].data == edges)
+    assert out_edges[0] is out_edges[1]
+    assert out_edges[0] is Edges.outputs[0]
 
     savegraph(graph, f"output/test_AxisDistortionMatrix_{dtype}.png")
 
