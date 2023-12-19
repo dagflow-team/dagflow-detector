@@ -87,8 +87,13 @@ class RebinMatrix(FunctionNode):
     def __raise_exception_at_wrong_edges(self, retcode, iold, edge_old, inew, edge_new) -> None:
         print("Old edges:", self._edges_old.dd.size, self._edges_old.data)
         print("New edges:", self._edges_new.dd.size, self._edges_new.data)
-        edges_kind = "outer" if retcode == 1 else "inner"
-        raise RuntimeError(f"Inconsistent edges ({edges_kind}): old {iold} {edge_old}, new {inew} {edge_new}")
+        edges_kind = (
+                "first edge is before old first",
+                "last edge is after the old last",
+                # "old bins ended",
+                "inconsistent new edge"
+                )[retcode-1]
+        raise RuntimeError(f"Inconsistent edges ({edges_kind}): old {iold} {edge_old}, new {inew} {edge_new}, diff {edge_old-edge_new:.2g}")
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
@@ -109,16 +114,16 @@ def _calc_rebin_matrix_python(
     C = [Nx1]
     """
 
-    if edges_new[0] < edges_old[0] or not isclose(edges_new[0], edges_old[0], atol=atol, rtol=rtol):
+    if edges_new[0] < edges_old[0] and not isclose(edges_new[0], edges_old[0], atol=atol, rtol=rtol):
         return 1, 0, edges_old[0], 0, edges_new[0]
-    if edges_new[-1] > edges_old[-1] or not isclose(edges_new[-1], edges_old[-1], atol=atol, rtol=rtol):
+    if edges_new[-1] > edges_old[-1] and not isclose(edges_new[-1], edges_old[-1], atol=atol, rtol=rtol):
         return 2, -1, edges_old[-1], -1, edges_new[-1]
 
     inew = 0
     iold = 0
     edge_old = edges_old[0]
     edge_new_prev = edges_new[0]
-    nold = edges_old.size
+    # nold = edges_old.size
 
     stepper_old = enumerate(edges_old)
     iold, edge_old = next(stepper_old)
@@ -128,11 +133,11 @@ def _calc_rebin_matrix_python(
                 rebin_matrix[inew - 1, iold] = 1.0
 
             iold, edge_old = next(stepper_old)
-            if iold >= nold:
-                return 1, iold, edge_old, inew, edge_new_prev
+            # if iold >= nold:
+            #     return 3, iold, edge_old, inew, edge_new_prev
 
         if not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
-            return 2, iold, edge_old, inew, edge_new_prev
+            return 3, iold, edge_old, inew, edge_new_prev
 
     return 0, iold, edge_old, inew, edge_new_prev
 

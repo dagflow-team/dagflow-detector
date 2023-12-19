@@ -12,22 +12,23 @@ from detector.Rebin import Rebin
 from detector.RebinMatrix import RebinMatrix
 
 
-def partial_sum(y_old: NDArray, m: int) -> list:
+def partial_sum(y_old: NDArray, stride: int) -> list:
     psum = []
     i = 0
     while i < y_old.size:
-        psum.append(y_old[i : i + m].sum())
-        i += m
+        psum.append(y_old[i : i + stride].sum())
+        i += stride
     return psum
 
 
 @mark.parametrize("dtype", ("d", "f"))
-@mark.parametrize("m", (2, 4))
+@mark.parametrize("start", (0, 1))
+@mark.parametrize("stride", (2, 4))
 @mark.parametrize("mode", ("python", "numba"))
-def test_Rebin(testname, m, dtype, mode):
+def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str):
     n = 21
     edges_old = linspace(0.0, 2.0, n, dtype=dtype)
-    edges_new = edges_old[::m]
+    edges_new = edges_old[start::stride]
     y_old_list = [linspace(3.0, 0.0, n - 1, dtype=dtype), linspace(2.0, 0.0, n - 1, dtype=dtype)]
 
     with Graph(close=True) as graph:
@@ -45,15 +46,17 @@ def test_Rebin(testname, m, dtype, mode):
 
     mat = metanode.outputs["matrix"].data
     # NOTE: Asserts below are only for current edges_new! For other binning it may not coincide!
-    assert (mat.sum(axis=0) == 1).all()
-    assert mat.sum(axis=0).sum() == n - 1
+    if not start:
+        assert (mat.sum(axis=0) == 1).all()
+        assert mat.sum(axis=0).sum() == n - 1
 
-    rtol = finfo(dtype).resolution
+    atol = finfo(dtype).resolution
     for i, y_old in enumerate(y_old_list):
         y_new = metanode.outputs[i].data
         y_res = matmul(mat, y_old)
-        assert allclose(y_res, y_new, atol=0.0, rtol=rtol)
-        assert allclose(partial_sum(y_old, m), y_new, atol=0.0, rtol=rtol)
+        assert allclose(y_res, y_new, atol=atol, rtol=0)
+        y_check = partial_sum(y_old[start:], stride)
+        assert allclose(y_check[:len(y_new)], y_new, atol=atol, rtol=0)
 
     # plots
     plot_array_1d_hist(
