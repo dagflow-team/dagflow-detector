@@ -48,8 +48,8 @@ class Rebin(MetaNode):
         self,
         name: str = "RebinMatrix",
         mode: RebinModesType = "numba",
-        atol: float = 0.0,
-        rtol: float = finfo("d").resolution,
+        atol: float = finfo("d").resolution,
+        rtol: float = 0.0,
         label: Mapping = {},
     ) -> RebinMatrix:
         _RebinMatrix = RebinMatrix(name=name, mode=mode, atol=atol, rtol=rtol, label=label)
