@@ -31,12 +31,13 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str):
     edges_new = edges_old[start::stride]
     y_old_list = [linspace(3.0, 0.0, n - 1, dtype=dtype), linspace(2.0, 0.0, n - 1, dtype=dtype)]
 
+    atol = finfo(dtype).resolution
     with Graph(close=True) as graph:
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)
         Y = Array("Y", y_old_list[0])
         Y2 = Array("Y2", y_old_list[1])
-        metanode = Rebin(mode=mode)
+        metanode = Rebin(mode=mode, atol=atol)
 
         EdgesOld >> metanode.inputs["edges_old"]
         EdgesNew >> metanode.inputs["edges_new"]
@@ -50,7 +51,6 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str):
         assert (mat.sum(axis=0) == 1).all()
         assert mat.sum(axis=0).sum() == n - 1
 
-    atol = finfo(dtype).resolution
     for i, y_old in enumerate(y_old_list):
         y_new = metanode.outputs[i].data
         y_res = matmul(mat, y_old)
