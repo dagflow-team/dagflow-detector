@@ -26,9 +26,8 @@ class Rebin(MetaNode):
         *,
         bare: bool = False,
         mode: RebinModesType = "numba",
-        atol: float = 0.0,
-        rtol: float = finfo("d").resolution,
         labels: Mapping = {},
+        **kwargs
     ):
         super().__init__()
         self._RebinMatrixList = []
@@ -39,9 +38,8 @@ class Rebin(MetaNode):
         self.add_RebinMatrix(
             name="RebinMatrix",
             mode=mode,
-            atol=atol,
-            rtol=rtol,
             label=labels.get("RebinMatrix", {}),
+            **kwargs
         )
         self.add_VectorMatrixProduct("VectorMatrixProduct", labels.get("VectorMatrixProduct", {}))
         self._bind_outputs()
@@ -97,12 +95,13 @@ class Rebin(MetaNode):
     @classmethod
     def replicate(
         cls,
-        name_RebinMatrix: str = "rebin_matrix",
-        name_VectorMatixProduct: str = "vector_matrix_product",
+        name_matrix: str = "rebin_matrix",
+        name_product: str = "vector_matrix_product",
         path: Optional[str] = None,
         labels: Mapping = {},
         *,
         replicate: Tuple[KeyLike, ...] = ((),),
+        **kwargs
     ) -> Tuple["Rebin", "NodeStorage"]:
         storage = NodeStorage(default_containers=True)
         nodes = storage("nodes")
@@ -110,16 +109,17 @@ class Rebin(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_VectorMatixProduct = (name_VectorMatixProduct,)
-        key_RebinMatrix = (name_RebinMatrix,)
+        key_VectorMatixProduct = (name_product,)
+        key_RebinMatrix = (name_matrix,)
         if path:
             tpath = tuple(path.split("."))
             key_VectorMatixProduct = tpath + key_VectorMatixProduct
             key_RebinMatrix = tpath + key_RebinMatrix
 
         _RebinMatrix = instance.add_RebinMatrix(
-            name_RebinMatrix,
+            name_matrix,
             label = labels.get("RebinMatrix", {}),
+            **kwargs
         )
         nodes[key_RebinMatrix] = _RebinMatrix
         for iname, input in _RebinMatrix.inputs.iter_kw_items():

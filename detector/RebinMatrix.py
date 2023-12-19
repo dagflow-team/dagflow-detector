@@ -88,7 +88,7 @@ class RebinMatrix(FunctionNode):
         print("Old edges:", self._edges_old.dd.size, self._edges_old.data)
         print("New edges:", self._edges_new.dd.size, self._edges_new.data)
         edges_kind = "outer" if retcode == 1 else "inner"
-        raise RuntimeError(f"Inconsistent edges ({edges_kind}): {iold} {edge_old}, {inew} {edge_new}")
+        raise RuntimeError(f"Inconsistent edges ({edges_kind}): old {iold} {edge_old}, new {inew} {edge_new}")
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
