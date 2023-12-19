@@ -97,8 +97,8 @@ class Rebin(MetaNode):
     @classmethod
     def replicate(
         cls,
-        name_RebinMatrix: str = "RebinMatrix",
-        name_VectorMatixProduct: str = "VectorMatrixProduct",
+        name_RebinMatrix: str = "rebin_matrix",
+        name_VectorMatixProduct: str = "vector_matrix_product",
         path: Optional[str] = None,
         labels: Mapping = {},
         *,
@@ -126,16 +126,15 @@ class Rebin(MetaNode):
             inputs[key_RebinMatrix + (iname,)] = input
         outputs[key_RebinMatrix] = _RebinMatrix.outputs["matrix"]
 
-        _VectorMatrixProduct = instance.add_VectorMatrixProduct(
-            "VectorMatrixProduct", labels.get("VectorMatrixProduct", {})
-        )
-        _VectorMatrixProduct()
-        nodes[key_VectorMatixProduct] = _VectorMatrixProduct
-        for iname, input in _VectorMatrixProduct.inputs.iter_kw_items():
-            inputs[key_VectorMatixProduct + (iname,)] = input
-        outputs[key_VectorMatixProduct] = _VectorMatrixProduct.outputs["result"]
-
-        _RebinMatrix.outputs["matrix"] >> _VectorMatrixProduct.inputs["matrix"]
+        # _VectorMatrixProduct = instance.add_VectorMatrixProduct(
+        #     "VectorMatrixProduct", labels.get("VectorMatrixProduct", {})
+        # )
+        # _VectorMatrixProduct()
+        # nodes[key_VectorMatixProduct] = _VectorMatrixProduct
+        # for iname, input in _VectorMatrixProduct.inputs.iter_kw_items():
+        #     inputs[key_VectorMatixProduct + (iname,)] = input
+        # outputs[key_VectorMatixProduct] = _VectorMatrixProduct.outputs["result"]
+        # _RebinMatrix.outputs["matrix"] >> _VectorMatrixProduct.inputs["matrix"]
 
         label_int = labels.get("Rebin", {})
         for key in replicate:
@@ -144,7 +143,9 @@ class Rebin(MetaNode):
 
             name = ".".join(key_VectorMatixProduct + key)
             _VectorMatrixProduct = instance.add_VectorMatrixProduct(name, label_int)
+            _VectorMatrixProduct()
             nodes[name] = _VectorMatrixProduct
+            inputs[name] = _VectorMatrixProduct.inputs["vector"]
             outputs[name] = _VectorMatrixProduct.outputs["result"]
             _RebinMatrix.outputs["matrix"] >> _VectorMatrixProduct.inputs["matrix"]
 
