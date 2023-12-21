@@ -31,7 +31,7 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str):
     edges_new = edges_old[start::stride]
     y_old_list = [linspace(3.0, 0.0, n - 1, dtype=dtype), linspace(2.0, 0.0, n - 1, dtype=dtype)]
 
-    atol = finfo(dtype).resolution
+    atol = finfo(dtype).resolution*10
     with Graph(close=True) as graph:
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)

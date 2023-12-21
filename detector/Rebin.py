@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Mapping, Optional, Tuple
 
-from numpy import finfo
-
 from dagflow.exception import ConnectionError
 from dagflow.lib import VectorMatrixProduct
 from dagflow.metanode import MetaNode
@@ -48,11 +46,9 @@ class Rebin(MetaNode):
         self,
         name: str = "RebinMatrix",
         mode: RebinModesType = "numba",
-        atol: float = finfo("d").resolution,
-        rtol: float = 0.0,
-        label: Mapping = {},
+        **kwargs
     ) -> RebinMatrix:
-        _RebinMatrix = RebinMatrix(name=name, mode=mode, atol=atol, rtol=rtol, label=label)
+        _RebinMatrix = RebinMatrix(name=name, mode=mode, **kwargs)
         self._RebinMatrixList.append(_RebinMatrix)
         self._add_node(
             _RebinMatrix,
