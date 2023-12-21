@@ -133,8 +133,6 @@ def _calc_rebin_matrix_python(
                 rebin_matrix[inew - 1, iold] = 1.0
 
             iold, edge_old = next(stepper_old)
-            # if iold >= nold:
-            #     return 3, iold, edge_old, inew, edge_new_prev
 
         if not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
             return 3, iold, edge_old, inew, edge_new_prev
