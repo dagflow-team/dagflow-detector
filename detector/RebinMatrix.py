@@ -32,7 +32,7 @@ class RebinMatrix(FunctionNode):
     def __init__(
         self,
         *args,
-        atol: float = finfo("d").resolution,
+        atol: float = finfo("d").resolution*10,
         rtol: float = 0.0,
         mode: RebinModesType = "numba",
         **kwargs,
