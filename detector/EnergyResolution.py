@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Mapping, Optional, Tuple
+from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
+from dagflow.exception import ConnectionError
 from dagflow.lib import BinCenter
 from dagflow.metanode import MetaNode
 from dagflow.storage import NodeStorage
-from dagflow.exception import ConnectionError
-from multikeydict.typing import KeyLike
-
 from detector.EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
 from detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
+from multikeydict.typing import KeyLike
 
 if TYPE_CHECKING:
     from dagflow.node import Node
@@ -22,9 +22,9 @@ class EnergyResolution(MetaNode):
         "_BinCenterList",
     )
 
-    _EnergyResolutionMatrixBCList: List["Node"]
-    _EnergyResolutionSigmaRelABCList: List["Node"]
-    _BinCenterList: List["Node"]
+    _EnergyResolutionMatrixBCList: list[Node]
+    _EnergyResolutionSigmaRelABCList: list[Node]
+    _BinCenterList: list[Node]
 
     def __init__(self, *, bare: bool = False, labels: Mapping = {}):
         super().__init__()
@@ -114,11 +114,11 @@ class EnergyResolution(MetaNode):
         name_EnergyResolutionMatrixBC: str = "matrix",
         name_Edges: str = "e_edges",
         name_BinCenter: str = "e_bincenter",
-        path: Optional[str] = None,
+        path: str | None = None,
         labels: Mapping = {},
         *,
-        replicate: Tuple[KeyLike, ...] = ((),),
-    ) -> Tuple["EnergyResolution", "NodeStorage"]:
+        replicate: tuple[KeyLike, ...] = ((),),
+    ) -> tuple[EnergyResolution, NodeStorage]:
         storage = NodeStorage(default_containers=True)
         nodes = storage("nodes")
         inputs = storage("inputs")

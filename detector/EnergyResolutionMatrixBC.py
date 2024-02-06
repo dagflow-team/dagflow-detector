@@ -1,11 +1,14 @@
-from math import exp, sqrt
+from math import exp
+from math import sqrt
 from typing import TYPE_CHECKING
 
-from numba import float64, njit, void
-from numpy import double, pi
-from numpy.typing import NDArray
-
 from dagflow.nodes import FunctionNode
+from numba import float64
+from numba import njit
+from numba import void
+from numpy import double
+from numpy import pi
+from numpy.typing import NDArray
 
 if TYPE_CHECKING:
     from dagflow.input import Input

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
-from dagflow.nodes import FunctionNode
 
+from dagflow.nodes import FunctionNode
 from numpy.typing import NDArray
 
 if TYPE_CHECKING:
@@ -164,7 +164,7 @@ def _axisdistortion_python(
 
 
 from numba import njit
-from typing import Callable
+from collections.abc import Callable
 
 _axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(
     cache=True

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Mapping, Optional, Tuple
+from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from dagflow.exception import ConnectionError
 from dagflow.lib import VectorMatrixProduct
@@ -16,8 +17,8 @@ if TYPE_CHECKING:
 class Rebin(MetaNode):
     __slots__ = ("_RebinMatrixList", "_VectorMatrixProductList")
 
-    _RebinMatrixList: List["Node"]
-    _VectorMatrixProductList: List["Node"]
+    _RebinMatrixList: list[Node]
+    _VectorMatrixProductList: list[Node]
 
     def __init__(
         self,
@@ -93,12 +94,12 @@ class Rebin(MetaNode):
         cls,
         name_matrix: str = "rebin_matrix",
         name_product: str = "vector_matrix_product",
-        path: Optional[str] = None,
+        path: str | None = None,
         labels: Mapping = {},
         *,
-        replicate: Tuple[KeyLike, ...] = ((),),
+        replicate: tuple[KeyLike, ...] = ((),),
         **kwargs
-    ) -> Tuple["Rebin", "NodeStorage"]:
+    ) -> tuple[Rebin, NodeStorage]:
         storage = NodeStorage(default_containers=True)
         nodes = storage("nodes")
         inputs = storage("inputs")

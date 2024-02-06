@@ -1,4 +1,3 @@
-from typing import Optional, Tuple
 
 from numpy import arange, concatenate, linspace
 from numpy.typing import NDArray
@@ -37,7 +36,7 @@ class RefineGraph:
     xcoarse: NDArray
     xfine_bound: NDArray
     xfine_extended: NDArray
-    xfine_extended_stack: Tuple[Optional[NDArray], Optional[NDArray], Optional[NDArray]]
+    xfine_extended_stack: tuple[NDArray | None, NDArray | None, NDArray | None]
     refine_times: int
     newmin: float
     newmax: float

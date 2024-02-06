@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Callable, Literal, Tuple
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Literal
 
 from numba import njit
 from numpy import finfo, isclose
@@ -106,7 +107,7 @@ class RebinMatrix(FunctionNode):
 
 def _calc_rebin_matrix_python(
     edges_old: NDArray, edges_new: NDArray, rebin_matrix: NDArray, atol: float, rtol: float
-) -> Tuple[int, int, float, int, float]:
+) -> tuple[int, int, float, int, float]:
     """
     For a column C of size N: Cnew = M C
     Cnew = [Mx1]
@@ -141,5 +142,5 @@ def _calc_rebin_matrix_python(
 
 
 _calc_rebin_matrix_numba: Callable[
-    [NDArray, NDArray, NDArray, float, float], Tuple[int, int, float, int, float]
+    [NDArray, NDArray, NDArray, float, float], tuple[int, int, float, int, float]
 ] = njit(cache=True)(_calc_rebin_matrix_python)
