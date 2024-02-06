@@ -8,7 +8,8 @@ tests:
   variables:
     GIT_DEPTH: 1
   script:
-    - apt-get install graphviz
+    - apt-get update
+    - apt-get -y install libgraphviz-dev graphviz
     - python3 -m venv venv
     - source venv/bin/activate
     - pip install --upgrade wheel setuptools pip
@@ -16,7 +17,6 @@ tests:
     - python3 -m pip install -r requirements.txt
     - git submodule sync
     - git submodule update --init --recursive --depth=1 -- submodules/dag-flow
-    - PYTHONPATH="$PYTHONPATH:/builds/dag-computing/dagflow-detector/submodules/dag-flow"
     - mkdir output
     - coverage run --source=. --omit=submodules/* -m pytest
     - coverage report
