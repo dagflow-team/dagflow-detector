@@ -8,8 +8,8 @@ from dagflow.graphviz import savegraph
 from dagflow.lib import Array
 from dagflow.plot import closefig, plot_array_1d_hist, savefig
 
-from detector.Rebin import Rebin
-from detector.RebinMatrix import RebinMatrix
+from dgf_detector.Rebin import Rebin
+from dgf_detector.RebinMatrix import RebinMatrix
 
 
 def partial_sum(y_old: NDArray, stride: int) -> list:
