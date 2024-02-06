@@ -7,8 +7,8 @@ from dagflow.exception import ConnectionError
 from dagflow.lib import BinCenter
 from dagflow.metanode import MetaNode
 from dagflow.storage import NodeStorage
-from detector.EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
-from detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
+from dgf_detector.EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
+from dgf_detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
 from multikeydict.typing import KeyLike
 
 if TYPE_CHECKING:

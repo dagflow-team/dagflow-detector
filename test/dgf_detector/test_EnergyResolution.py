@@ -7,7 +7,7 @@ from pytest import mark
 from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib.Array import Array
-from detector.EnergyResolution import EnergyResolution
+from dgf_detector.EnergyResolution import EnergyResolution
 
 parnames = ("a_nonuniform", "b_stat", "c_noise")
 

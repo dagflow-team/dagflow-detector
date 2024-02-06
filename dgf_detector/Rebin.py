@@ -7,7 +7,7 @@ from dagflow.exception import ConnectionError
 from dagflow.lib import VectorMatrixProduct
 from dagflow.metanode import MetaNode
 from dagflow.storage import NodeStorage
-from detector.RebinMatrix import RebinMatrix, RebinModesType
+from dgf_detector.RebinMatrix import RebinMatrix, RebinModesType
 from multikeydict.typing import KeyLike
 
 if TYPE_CHECKING:
