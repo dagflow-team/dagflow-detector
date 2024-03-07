@@ -110,13 +110,15 @@ class EnergyResolution(MetaNode):
     @classmethod
     def replicate(
         cls,
-        name_EnergyResolutionSigmaRelABC: str = "sigma_rel",
-        name_EnergyResolutionMatrixBC: str = "matrix",
-        name_Edges: str = "e_edges",
-        name_BinCenter: str = "e_bincenter",
+        *,
+        names: Mapping[str, str] = {
+            "EnergyResolutionSigmaRelABC": "sigma_rel",
+            "EnergyResolutionMatrixBC": "matrix",
+            "Edges": "e_edges",
+            "BinCenter": "e_bincenter",
+            },
         path: str | None = None,
         labels: Mapping = {},
-        *,
         replicate: tuple[KeyLike, ...] = ((),),
     ) -> tuple[EnergyResolution, NodeStorage]:
         storage = NodeStorage(default_containers=True)
@@ -125,10 +127,10 @@ class EnergyResolution(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_EnergyResolutionMatrixBC = (name_EnergyResolutionMatrixBC,)
-        key_EnergyResolutionSigmaRelABC = (name_EnergyResolutionSigmaRelABC,)
-        key_BinCenter = (name_BinCenter,)
-        key_Edges = (name_Edges,)
+        key_EnergyResolutionMatrixBC = (names["EnergyResolutionMatrixBC"],)
+        key_EnergyResolutionSigmaRelABC = (names["EnergyResolutionSigmaRelABC"],)
+        key_BinCenter = (names["BinCenter"],)
+        key_Edges = (names["Edges"],)
         if path:
             tpath = tuple(path.split("."))
             key_EnergyResolutionMatrixBC = tpath + key_EnergyResolutionMatrixBC
@@ -137,7 +139,7 @@ class EnergyResolution(MetaNode):
             key_Edges = tpath + key_Edges
 
         _EnergyResolutionSigmaRelABC = instance.add_EnergyResolutionSigmaRelABC(
-            name_EnergyResolutionSigmaRelABC,
+            names["EnergyResolutionSigmaRelABC"],
             labels.get("EnergyResolutionSigmaRelABC", {}),
         )
         nodes[key_EnergyResolutionSigmaRelABC] = _EnergyResolutionSigmaRelABC

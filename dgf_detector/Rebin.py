@@ -92,11 +92,13 @@ class Rebin(MetaNode):
     @classmethod
     def replicate(
         cls,
-        name_matrix: str = "rebin_matrix",
-        name_product: str = "vector_matrix_product",
+        *,
+        names: Mapping[str, str] = {
+            "matrix": "rebin_matrix",
+            "product": "vector_matrix_product",
+            },
         path: str | None = None,
         labels: Mapping = {},
-        *,
         replicate: tuple[KeyLike, ...] = ((),),
         **kwargs
     ) -> tuple[Rebin, NodeStorage]:
@@ -106,15 +108,15 @@ class Rebin(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_VectorMatixProduct = tuple(name_product.split('.'))
-        key_RebinMatrix = tuple(name_matrix.split('.'))
+        key_VectorMatixProduct = tuple(names["product"].split('.'))
+        key_RebinMatrix = tuple(names["matrix"].split('.'))
         if path:
             tpath = tuple(path.split("."))
             key_VectorMatixProduct = tpath + key_VectorMatixProduct
             key_RebinMatrix = tpath + key_RebinMatrix
 
         _RebinMatrix = instance.add_RebinMatrix(
-            name_matrix,
+            names["matrix"],
             label = labels.get("RebinMatrix", {}),
             **kwargs
         )
