@@ -4,8 +4,8 @@ from pytest import mark
 from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib import Array
-from detector.AxisDistortionMatrix import AxisDistortionMatrix
-from detector.AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
+from dgf_detector.AxisDistortionMatrix import AxisDistortionMatrix
+from dgf_detector.AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
 
 
 @mark.parametrize(
@@ -33,12 +33,13 @@ from detector.AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
 @mark.parametrize(
     "linear",
     (
-        # False,
-        True
+        False,
+        True,
     ),
 )
 def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
-    edgesset = test_sets[setname]
+    test_sets_current = test_sets[f"{'' if linear else 'non'}linear"]
+    edgesset = test_sets_current[setname]
     edges = array(edgesset["edges"], dtype=dtype)
     edges_modified = array(edgesset["edges_modified"], dtype=dtype)
     edges_backward = array(edgesset["edges_backward"], dtype=dtype)
@@ -55,7 +56,7 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
     with Graph(close=True) as graph:
         Edges = Array("Edges", edges)
         EdgesModified = Array("Edges modified", edges_modified)
-        if linear:
+        if not linear:
             EdgesBackward = Array("Edges, projected backward", edges_backward)
 
         if linear:
@@ -66,13 +67,15 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
         Edges >> mat.inputs["EdgesOriginal"]
         EdgesModified >> mat.inputs["EdgesModified"]
 
-        if linear:
+        if not linear:
             EdgesBackward >> mat.inputs["EdgesModifiedBackwards"]
 
     res = mat.get_data()
+
     ressum = res.sum(axis=0)
-    print(res)
-    print(ressum)
+    print("Obtained matrix:\n", res)
+    print("Obtained matrix sum:\n", ressum)
+
     atol = 0 if dtype == "d" else finfo(dtype).resolution * 0.5
     assert allclose(res, desired, atol=atol, rtol=0)
 
@@ -92,146 +95,292 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
 
 # fmt: off
 test_sets = {
-        'test1': dict(
-            # from:           0         1    2              3              4
-            edges          = [1.0,      2.0, 3.0,           4.0,           5.0, ],
-            edges_backward = [     1.4,           3.4, 3.8,      4.2, 4.6       ],
-            # to                   0              1    2         3    4
-            # edges        = [     1.0,           2.0, 3.0,      4.0, 5.0       ]
-            edges_modified = [0.8,      1.4, 1.8,           3.5,           5.5, ],
-            # from:           0         1    2              3              4
-            matrix =       [                                                       # To:
-            # From:           0              1              2              3       #
-                [ (2.0-1.4)/1.0, (3.0-2.0)/1.0, (3.4-3.0)/1.0,           0.0 ],    # 0
-                [           0.0,           0.0, (3.8-3.4)/1.0,           0.0 ],    # 1
-                [           0.0,           0.0, (4.0-3.8)/1.0, (4.2-4.0)/1.0 ],    # 2
-                [           0.0,           0.0,           0.0, (4.6-4.2)/1.0 ],    # 3
-                ]
-            ),
-        'test2_undershoot_left': dict(
-            # from:                0    1    2              3              4
-            edges          = [     1.0, 2.0, 3.0,           4.0,           5.0, ],
-            edges_backward = [0.9,                3.4, 3.8,      4.2, 4.6       ],
-            # to              0                   1    2         3    4
-            # edges        = [1.0,                2.0, 3.0,      4.0, 5.0       ]
-            edges_modified = [     1.1, 1.4, 1.8,           3.5,           5.5, ],
-            # from:                0    1    2              3              4
-            matrix =       [                                                       # To:
-            # From:           0              1              2              3       #
-                [ (2.0-1.0)/1.0, (3.0-2.0)/1.0, (3.4-3.0)/1.0,           0.0 ],    # 0
-                [           0.0,           0.0, (3.8-3.4)/1.0,           0.0 ],    # 1
-                [           0.0,           0.0, (4.0-3.8)/1.0, (4.2-4.0)/1.0 ],    # 2
-                [           0.0,           0.0,           0.0, (4.6-4.2)/1.0 ],    # 3
-                ]
-            ),
-        'test2_undershoot_right': dict(
-            # from:                0    1    2              3              4
-            edges          = [     1.0, 2.0, 3.0,           4.0,           5.0, ],
-            edges_backward = [0.9,                3.4, 3.8,      4.2, 4.6       ],
-            # to              0                   1    2         3    4
-            # edges        = [1.0,                2.0, 3.0,      4.0, 5.0       ]
-            edges_modified = [     1.1, 1.4, 1.8,           3.5,           5.5, ],
-            # from:                0    1    2              3              4
-            matrix =       [                                                       # To:
-            # From:           0              1              2              3       #
-                [ (2.0-1.0)/1.0, (3.0-2.0)/1.0, (3.4-3.0)/1.0,           0.0 ],    # 0
-                [           0.0,           0.0, (3.8-3.4)/1.0,           0.0 ],    # 1
-                [           0.0,           0.0, (4.0-3.8)/1.0, (4.2-4.0)/1.0 ],    # 2
-                [           0.0,           0.0,           0.0, (4.6-4.2)/1.0 ],    # 3
-                ]
-            ),
-        'test3_minimal1': dict(
-            # from:           0         1
-            edges          = [1.0,      2.0            ],
-            edges_backward = [     1.4,           3.4  ],
-            # to                   0              1
-            # edges        = [     1.0,           2.0  ]
-            edges_modified = [0.9,      1.4            ],
-            # from:                0    1
-            matrix =       [       # To:
-            # From:           0    #
-                [ (2.0-1.4)/1.0 ], # 0
-                ]
-            ),
-        'test3_minimal2': dict(
-            # from:                0    1
-            edges          = [     1.0, 2.0            ],
-            edges_backward = [0.9,                3.4  ],
-            # to              0                   1
-            # edges        = [1.0,                2.0  ]
-            edges_modified = [     1.1, 1.4            ],
-            # from:                0    1
-            matrix =       [       # To:
-            # From:           0    #
-                [ (2.0-1.0)/1.0 ], # 0
-                ]
-            ),
-        'test3_minimal3': dict(
-            # from:           0              1
-            edges          = [1.0,           2.0 ],
-            edges_backward = [     1.4,  1.6     ],
-            # to                   0     1
-            # edges        = [     1.0,  2.0     ]
-            edges_modified = [0.9,           2.4 ],
-            # from:                0         1
-            matrix =       [       # To:
-            # From:           0    #
-                [ (1.6-1.4)/1.0 ], # 0
-                ]
-            ),
-        'test3_minimal4': dict(
-            # from:                0         1
-            edges          = [     1.0,      2.0 ],
-            edges_backward = [0.9,       1.6     ],
-            # to              0          1
-            # edges        = [1.0,       2.0     ]
-            edges_modified = [     1.1,      2.4 ],
-            # from:                0         1
-            matrix =       [       # To:
-            # From:           0    #
-                [ (1.6-1.0)/1.0 ], # 0
-                ]
-            ),
-        'test3_minimal5': dict(
-            # from:                     0    1
-            edges          = [          1.0, 2.0 ],
-            edges_backward = [0.8,  0.9          ],
-            # to              0     1
-            # edges        = [1.0,  2.0          ]
-            edges_modified = [          2.1, 2.4 ],
-            # from:                0         1
-            matrix =       [       # To:
-            # From:           0    #
-                [           0.0 ], # 0
-                ]
-            ),
-        'test3_minimal6': dict(
-            # from:           0    1
-            edges          = [1.0, 2.0           ],
-            edges_backward = [         2.8,  2.9 ],
-            # to                       0     1
-            # edges        = [         1.0,  2.0 ]
-            edges_modified = [0.8, 0.9           ],
-            # from:                0         1
-            matrix =       [       # To:
-            # From:           0    #
-                [           0.0 ], # 0
-                ]
-            ),
-        'test4_variable': dict(
-            # from:           0         1    2              3              4
-            edges          = [1.0,      2.0, 4.0,           7.0,           11.0 ],
-            edges_backward = [     1.4,           4.4, 4.8,      7.2, 8.6       ],
-            # to                   0              1    2         3    4
-            # edges        = [     1.0,           2.0, 4.0,      7.0, 11.0       ]
-            edges_modified = [0.8,      1.4, 1.8,           6.5,           11.5 ],
-            # from:           0         1    2              3              4
-            matrix =       [                                                       # To:
-            # From:           0              1              2              3       #
-                [ (2.0-1.4)/1.0, (4.0-2.0)/2.0, (4.4-4.0)/3.0,           0.0 ],    # 0
-                [           0.0,           0.0, (4.8-4.4)/3.0,           0.0 ],    # 1
-                [           0.0,           0.0, (7.0-4.8)/3.0, (7.2-7.0)/4.0 ],    # 2
-                [           0.0,           0.0,           0.0, (8.6-7.2)/4.0 ],    # 3
-                ]
-            ),
+        "linear": {
+            'test1': dict(
+                # from:           0         1    2              3              4
+                edges          = [1.0,      2.0, 3.0,           4.0,           5.0, ],
+                edges_backward = [     1.4,           3.4, 3.8,      4.2, 4.6       ],
+                # to                   0              1    2         3    4
+                # edges        = [     1.0,           2.0, 3.0,      4.0, 5.0       ]
+                edges_modified = [0.8,      1.4, 1.8,           3.5,           5.5, ],
+                # from:           0         1    2              3              4
+                matrix =       [                                                       # To:
+                # From:                 0                    1                    2                    3       #
+                    [ (1.4-1.0)/(1.4-0.8), (1.8-1.4)/(1.8-1.4), (2.0-1.8)/(3.5-1.8),           (0.0-0.0) ],    # 0
+                    [           (0.0-0.0),           (0.0-0.0), (3.0-2.0)/(3.5-1.8),           (0.0-0.0) ],    # 1
+                    [           (0.0-0.0),           (0.0-0.0), (3.5-3.0)/(3.5-1.8), (4.0-3.5)/(5.5-3.5) ],    # 2
+                    [           (0.0-0.0),           (0.0-0.0),           (0.0-0.0), (5.0-4.0)/(5.5-3.5) ],    # 3
+                    ]
+                ),
+            'test2_undershoot_left': dict(
+                # from:                0    1    2              3              4
+                edges          = [     1.0, 2.0, 3.0,           4.0,           5.0, ],
+                edges_backward = [0.9,                3.4, 3.8,      4.2, 4.6       ],
+                # to              0                   1    2         3    4
+                # edges        = [1.0,                2.0, 3.0,      4.0, 5.0       ]
+                edges_modified = [     1.1, 1.4, 1.8,           3.5,           5.5, ],
+                # from:                0    1    2              3              4
+                matrix =       [                                                       # To:
+                # From:                 0                    1                    2                    3       #
+                    [ (1.4-1.1)/(1.4-1.1), (1.8-1.4)/(1.8-1.4), (2.0-1.8)/(3.5-1.8),           (0.0-0.0) ],    # 0
+                    [           (0.0-0.0),           (0.0-0.0), (3.0-2.0)/(3.5-1.8),           (0.0-0.0) ],    # 1
+                    [           (0.0-0.0),           (0.0-0.0), (3.5-3.0)/(3.5-1.8), (4.0-3.5)/(5.5-3.5) ],    # 2
+                    [           (0.0-0.0),           (0.0-0.0),           (0.0-0.0), (5.0-4.0)/(5.5-3.5) ],    # 3
+                    ]
+                ),
+            'test2_undershoot_right': dict(
+                # from:                0    1    2              3              4
+                edges          = [     1.0, 2.0, 3.0,           4.0,           5.0, ],
+                edges_backward = [0.9,                3.4, 3.8,      4.2, 4.6       ],
+                # to              0                   1    2         3              4
+                # edges        = [1.0,                2.0, 3.0,      4.0,           5.0       ]
+                edges_modified = [     1.1, 1.4, 1.9,           3.5,           4.9, ],
+                # from:                0    1    2              3              4
+                matrix =       [                                                       # To:
+                # From:                 0                    1                    2                    3       #
+                    [ (1.4-1.1)/(1.4-1.1), (1.9-1.4)/(1.9-1.4), (2.0-1.9)/(3.5-1.9),           (0.0-0.0) ],    # 0
+                    [           (0.0-0.0),           (0.0-0.0), (3.0-2.0)/(3.5-1.9),           (0.0-0.0) ],    # 1
+                    [           (0.0-0.0),           (0.0-0.0), (3.5-3.0)/(3.5-1.9), (4.0-3.5)/(4.9-3.5) ],    # 2
+                    [           (0.0-0.0),           (0.0-0.0),           (0.0-0.0), (4.9-4.0)/(4.9-3.5) ],    # 3
+                    ]
+                ),
+            'test3_minimal1': dict(
+                # from:           0         1
+                edges          = [1.0,      2.0            ],
+                edges_backward = [     1.4,           3.4  ],
+                # to                   0              1
+                # edges        = [     1.0,           2.0  ]
+                edges_modified = [0.9,      1.4            ],
+                # from:                0    1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (1.4-1.0)/(1.4-0.9) ], # 0
+                    ]
+                ),
+            'test3_minimal2': dict(
+                # from:                0    1
+                edges          = [     1.0, 2.0            ],
+                edges_backward = [0.9,                3.4  ],
+                # to              0                   1
+                # edges        = [1.0,                2.0  ]
+                edges_modified = [     1.1, 1.4            ],
+                # from:                0    1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (1.4-1.1)/(1.4-1.1) ], # 0
+                    ]
+                ),
+            'test3_minimal3': dict(
+                # from:           0              1
+                edges          = [1.0,           2.0 ],
+                edges_backward = [     1.4,  1.6     ],
+                # to                   0     1
+                # edges        = [     1.0,  2.0     ]
+                edges_modified = [0.9,           2.4 ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (2.0-1.0)/(2.4-0.9) ], # 0
+                    ]
+                ),
+            'test3_minimal4': dict(
+                # from:                0         1
+                edges          = [     1.0,      2.0 ],
+                edges_backward = [0.9,       1.6     ],
+                # to              0          1
+                # edges        = [1.0,       2.0     ]
+                edges_modified = [     1.1,      2.4 ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (2.0-1.1)/(2.4-1.1) ], # 0
+                    ]
+                ),
+            'test3_minimal5': dict(
+                # from:                     0    1
+                edges          = [          1.0, 2.0 ],
+                edges_backward = [0.8,  0.9          ],
+                # to              0     1
+                # edges        = [1.0,  2.0          ]
+                edges_modified = [          2.1, 2.4 ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [           0.0 ], # 0
+                    ]
+                ),
+            'test3_minimal6': dict(
+                # from:           0    1
+                edges          = [1.0, 2.0           ],
+                edges_backward = [         2.8,  2.9 ],
+                # to                       0     1
+                # edges        = [         1.0,  2.0 ]
+                edges_modified = [0.8, 0.9           ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [           0.0 ], # 0
+                    ]
+                ),
+            'test4_variable': dict(
+                # from:           0         1    2              3              4
+                edges          = [1.0,      2.0, 4.0,           7.0,           11.0 ],
+                edges_backward = [     1.4,           4.4, 4.8,      7.2, 8.6       ],
+                # to                   0              1    2         3    4
+                # edges        = [     1.0,           2.0, 4.0,      7.0, 11.0       ]
+                edges_modified = [0.8,      1.4, 1.8,           6.5,           11.5 ],
+                # from:           0         1    2              3              4
+                matrix =       [                                                       # To:
+                # From:                 0                    1                    2                    3        #
+                    [ (1.4-1.0)/(1.4-0.8), (1.8-1.4)/(1.8-1.4), (2.0-1.8)/(6.5-1.8),           (0.0-0.0) ],     # 0
+                    [           (0.0-0.0),           (0.0-0.0), (4.0-2.0)/(6.5-1.8),           (0.0-0.0) ],     # 1
+                    [           (0.0-0.0),           (0.0-0.0), (6.5-4.0)/(6.5-1.8), (7.0-6.5)/(11.5-6.5) ],    # 2
+                    [           (0.0-0.0),           (0.0-0.0),           (0.0-0.0), (11.0-7.0)/(11.5-6.5) ],    # 3
+                    ]
+                ),
+        },
+        "nonlinear": {
+            'test1': dict(
+                # from:           0         1    2              3              4
+                edges          = [1.0,      2.0, 3.0,           4.0,           5.0, ],
+                edges_backward = [     1.4,           3.4, 3.8,      4.2, 4.6       ],
+                # to                   0              1    2         3    4
+                # edges        = [     1.0,           2.0, 3.0,      4.0, 5.0       ]
+                edges_modified = [0.8,      1.4, 1.8,           3.5,           5.5, ],
+                # from:           0         1    2              3              4
+                matrix =       [                                                       # To:
+                # From:           0              1              2              3       #
+                    [ (2.0-1.4)/1.0, (3.0-2.0)/1.0, (3.4-3.0)/1.0,           0.0 ],    # 0
+                    [           0.0,           0.0, (3.8-3.4)/1.0,           0.0 ],    # 1
+                    [           0.0,           0.0, (4.0-3.8)/1.0, (4.2-4.0)/1.0 ],    # 2
+                    [           0.0,           0.0,           0.0, (4.6-4.2)/1.0 ],    # 3
+                    ]
+                ),
+            'test2_undershoot_left': dict(
+                # from:                0    1    2              3              4
+                edges          = [     1.0, 2.0, 3.0,           4.0,           5.0, ],
+                edges_backward = [0.9,                3.4, 3.8,      4.2, 4.6       ],
+                # to              0                   1    2         3    4
+                # edges        = [1.0,                2.0, 3.0,      4.0, 5.0       ]
+                edges_modified = [     1.1, 1.4, 1.8,           3.5,           5.5, ],
+                # from:                0    1    2              3              4
+                matrix =       [                                                       # To:
+                # From:           0              1              2              3       #
+                    [ (2.0-1.0)/1.0, (3.0-2.0)/1.0, (3.4-3.0)/1.0,           0.0 ],    # 0
+                    [           0.0,           0.0, (3.8-3.4)/1.0,           0.0 ],    # 1
+                    [           0.0,           0.0, (4.0-3.8)/1.0, (4.2-4.0)/1.0 ],    # 2
+                    [           0.0,           0.0,           0.0, (4.6-4.2)/1.0 ],    # 3
+                    ]
+                ),
+            'test2_undershoot_right': dict(
+                # from:                0    1    2              3              4
+                edges          = [     1.0, 2.0, 3.0,           4.0,           5.0, ],
+                edges_backward = [0.9,                3.4, 3.8,      4.2, 4.6       ],
+                # to              0                   1    2         3             4
+                # edges        = [1.0,                2.0, 3.0,      4.0,          5.0 ]
+                edges_modified = [     1.1, 1.4, 1.8,           3.5,           4.9, ],
+                # from:                0    1    2              3              4
+                matrix =       [                                                       # To:
+                # From:           0              1              2              3       #
+                    [ (2.0-1.0)/1.0, (3.0-2.0)/1.0, (3.4-3.0)/1.0,           0.0 ],    # 0
+                    [           0.0,           0.0, (3.8-3.4)/1.0,           0.0 ],    # 1
+                    [           0.0,           0.0, (4.0-3.8)/1.0, (4.2-4.0)/1.0 ],    # 2
+                    [           0.0,           0.0,           0.0, (4.6-4.2)/1.0 ],    # 3
+                    ]
+                ),
+            'test3_minimal1': dict(
+                # from:           0         1
+                edges          = [1.0,      2.0            ],
+                edges_backward = [     1.4,           3.4  ],
+                # to                   0              1
+                # edges        = [     1.0,           2.0  ]
+                edges_modified = [0.9,      1.4            ],
+                # from:                0    1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (2.0-1.4)/1.0 ], # 0
+                    ]
+                ),
+            'test3_minimal2': dict(
+                # from:                0    1
+                edges          = [     1.0, 2.0            ],
+                edges_backward = [0.9,                3.4  ],
+                # to              0                   1
+                # edges        = [1.0,                2.0  ]
+                edges_modified = [     1.1, 1.4            ],
+                # from:                0    1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (2.0-1.0)/1.0 ], # 0
+                    ]
+                ),
+            'test3_minimal3': dict(
+                # from:           0              1
+                edges          = [1.0,           2.0 ],
+                edges_backward = [     1.4,  1.6     ],
+                # to                   0     1
+                # edges        = [     1.0,  2.0     ]
+                edges_modified = [0.9,           2.4 ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (1.6-1.4)/1.0 ], # 0
+                    ]
+                ),
+            'test3_minimal4': dict(
+                # from:                0         1
+                edges          = [     1.0,      2.0 ],
+                edges_backward = [0.9,       1.6     ],
+                # to              0          1
+                # edges        = [1.0,       2.0     ]
+                edges_modified = [     1.1,      2.4 ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [ (1.6-1.0)/1.0 ], # 0
+                    ]
+                ),
+            'test3_minimal5': dict(
+                # from:                     0    1
+                edges          = [          1.0, 2.0 ],
+                edges_backward = [0.8,  0.9          ],
+                # to              0     1
+                # edges        = [1.0,  2.0          ]
+                edges_modified = [          2.1, 2.4 ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [           0.0 ], # 0
+                    ]
+                ),
+            'test3_minimal6': dict(
+                # from:           0    1
+                edges          = [1.0, 2.0           ],
+                edges_backward = [         2.8,  2.9 ],
+                # to                       0     1
+                # edges        = [         1.0,  2.0 ]
+                edges_modified = [0.8, 0.9           ],
+                # from:                0         1
+                matrix =       [       # To:
+                # From:           0    #
+                    [           0.0 ], # 0
+                    ]
+                ),
+            'test4_variable': dict(
+                # from:           0         1    2              3              4
+                edges          = [1.0,      2.0, 4.0,           7.0,           11.0 ],
+                edges_backward = [     1.4,           4.4, 4.8,      7.2, 8.6       ],
+                # to                   0              1    2         3    4
+                # edges        = [     1.0,           2.0, 4.0,      7.0, 11.0       ]
+                edges_modified = [0.8,      1.4, 1.8,           6.5,           11.5 ],
+                # from:           0         1    2              3              4
+                matrix =       [                                                       # To:
+                # From:           0              1              2              3       #
+                    [ (2.0-1.4)/1.0, (4.0-2.0)/2.0, (4.4-4.0)/3.0,           0.0 ],    # 0
+                    [           0.0,           0.0, (4.8-4.4)/3.0,           0.0 ],    # 1
+                    [           0.0,           0.0, (7.0-4.8)/3.0, (7.2-7.0)/4.0 ],    # 2
+                    [           0.0,           0.0,           0.0, (8.6-7.2)/4.0 ],    # 3
+                    ]
+                ),
         }
+    }
