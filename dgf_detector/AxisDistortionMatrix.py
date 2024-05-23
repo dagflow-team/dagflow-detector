@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
 
-from dagflow.nodes import FunctionNode
 from numpy.typing import NDArray
+
+from dagflow.nodes import FunctionNode
 
 if TYPE_CHECKING:
     from dagflow.input import Input
@@ -64,10 +65,10 @@ class AxisDistortionMatrix(FunctionNode):
         """A output takes this function to determine the dtype and shape"""
         from dagflow.typefunctions import (
             check_input_dimension,
+            check_input_size,
             check_inputs_same_dtype,
             check_inputs_same_shape,
             copy_input_dtype_to_output,
-            check_input_size,
             eval_output_dtype,
         )
 
@@ -108,14 +109,17 @@ def _axisdistortion_python(
     while (
         leftx_fine <= threshold or leftx_fine < min_original or lefty_fine < min_target
     ):
-        isx = edges_original[idxx0 + 1] < edges_backwards[idxx1 + 1]
-        if isx:
-            leftx_fine, lefty_fine = edges_original[0], edges_modified[0]
+        left_edge_from_x = edges_original[idxx0 + 1] < edges_backwards[idxx1 + 1]
+        if left_edge_from_x:
+            leftx_fine, lefty_fine = (
+                edges_original[idxx0 + 1],
+                edges_modified[idxx0 + 1],
+            )
             # left_axis = 0
             if (idxx0 := idxx0 + 1) >= nbinsx:
                 return
         else:
-            leftx_fine, lefty_fine = edges_backwards[0], edges_target[0]
+            leftx_fine, lefty_fine = edges_backwards[idxx1 + 1], edges_target[idxx1 + 1]
             # left_axis = 1
             if (idxx1 := idxx1 + 1) >= nbinsx:
                 return
@@ -147,7 +151,7 @@ def _axisdistortion_python(
         # print(
         #         f"x:{leftx_fine:8.4f}→{rightx_fine:8.4f}="
         #         f"{width_fine:8.4f}/{width_coarse:8.4f}={factor:8.4g} "
-        #         f"ax:{left_axis}→{right_axis} idxx:{idxx0: 4d},{idxx1: 4d} iidxy: {idxy: 4d} "
+        #         f"ax:{left_axis}→{right_axis} idxx:{idxx0: 4d},{idxx1: 4d} idxy: {idxy: 4d} "
         #         f"y:{lefty_fine:8.4f}→{righty_fine:8.4f}"
         # )
 
@@ -163,8 +167,9 @@ def _axisdistortion_python(
         # left_axis = right_axis
 
 
-from numba import njit
 from collections.abc import Callable
+
+from numba import njit
 
 _axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(
     cache=True
