@@ -4,7 +4,8 @@ from pytest import mark
 from dagflow.graph import Graph
 from dagflow.graphviz import savegraph
 from dagflow.lib import Array
-from dgf_detector.AxisDistortionMatrix import AxisDistortionMatrix
+from detector.AxisDistortionMatrix import AxisDistortionMatrix
+from detector.AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
 
 
 @mark.parametrize(
@@ -29,7 +30,14 @@ from dgf_detector.AxisDistortionMatrix import AxisDistortionMatrix
         "test4_variable",
     ),
 )
-def test_AxisDistortionMatrix(setname: str, dtype: str):
+@mark.parametrize(
+    "linear",
+    (
+        # False,
+        True
+    ),
+)
+def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
     edgesset = test_sets[setname]
     edges = array(edgesset["edges"], dtype=dtype)
     edges_modified = array(edgesset["edges_modified"], dtype=dtype)
@@ -47,12 +55,19 @@ def test_AxisDistortionMatrix(setname: str, dtype: str):
     with Graph(close=True) as graph:
         Edges = Array("Edges", edges)
         EdgesModified = Array("Edges modified", edges_modified)
-        EdgesBackward = Array("Edges, projected backward", edges_backward)
+        if linear:
+            EdgesBackward = Array("Edges, projected backward", edges_backward)
 
-        mat = AxisDistortionMatrix("LSNL matrix")
+        if linear:
+            mat = AxisDistortionMatrixLinear("LSNL matrix (linear)")
+        else:
+            mat = AxisDistortionMatrix("LSNL matrix")
+
         Edges >> mat.inputs["EdgesOriginal"]
         EdgesModified >> mat.inputs["EdgesModified"]
-        EdgesBackward >> mat.inputs["EdgesModifiedBackwards"]
+
+        if linear:
+            EdgesBackward >> mat.inputs["EdgesModifiedBackwards"]
 
     res = mat.get_data()
     ressum = res.sum(axis=0)
@@ -72,7 +87,7 @@ def test_AxisDistortionMatrix(setname: str, dtype: str):
     assert out_edges[0] is out_edges[1]
     assert out_edges[0] is Edges.outputs[0]
 
-    savegraph(graph, f"output/test_AxisDistortionMatrix_{dtype}.png")
+    savegraph(graph, f"output/test_AxisDistortionMatrix{linear and 'Linear' or ''}_{dtype}.png")
 
 
 # fmt: off
