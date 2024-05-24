@@ -9,19 +9,17 @@ if TYPE_CHECKING:
     from dagflow.output import Output
 
 
-class AxisDistortionMatrix(FunctionNode):
-    """For a given historam and distorted X axis compute the conversion matrix"""
+class AxisDistortionMatrixLinear(FunctionNode):
+    """For a given historam and distorted X axis compute the conversion matrix. Distortion is assumed to be linear."""
 
     __slots__ = (
         "_edges_original",
         "_edges_modified",
-        "_edges_backward",
         "_result",
     )
 
     _edges_original: "Input"
     _edges_modified: "Input"
-    _edges_backward: "Input"
     _result: "Output"
 
     def __init__(self, *args, **kwargs):
@@ -33,9 +31,6 @@ class AxisDistortionMatrix(FunctionNode):
         )
         self._edges_original = self._add_input("EdgesOriginal", positional=False)
         self._edges_modified = self._add_input("EdgesModified", positional=False)
-        self._edges_backward = self._add_input(
-            "EdgesModifiedBackwards", positional=False
-        )
         self._result = self._add_output("matrix")  # output: 0
 
         self._functions.update(
@@ -46,18 +41,16 @@ class AxisDistortionMatrix(FunctionNode):
         )
 
     def _fcn_python(self):
-        _axisdistortion_python(
+        _axisdistortion_linear_python(
             self._edges_original.data,
             self._edges_modified.data,
-            self._edges_backward.data,
             self._result.data,
         )
 
     def _fcn_numba(self):
-        _axisdistortion_numba(
+        _axisdistortion_linear_numba(
             self._edges_original.data,
             self._edges_modified.data,
-            self._edges_backward.data,
             self._result.data,
         )
 
@@ -72,7 +65,7 @@ class AxisDistortionMatrix(FunctionNode):
             eval_output_dtype,
         )
 
-        names_edges = ("EdgesOriginal", "EdgesModified", "EdgesModifiedBackwards")
+        names_edges = ("EdgesOriginal", "EdgesModified")
         check_input_dimension(self, names_edges, 1)
         check_inputs_same_dtype(self, names_edges)
         (nedges,) = check_inputs_same_shape(self, names_edges)
@@ -86,15 +79,14 @@ class AxisDistortionMatrix(FunctionNode):
         self.fcn = self._functions["numba"]
 
 
-def _axisdistortion_python(
+def _axisdistortion_linear_python(
     edges_original: NDArray,
     edges_modified: NDArray,
-    edges_backwards: NDArray,
     matrix: NDArray,
 ):
     # in general, target edges may be different (fine than original), the code should handle it.
     edges_target = edges_original
-    min_original = edges_original[0]
+    # min_original = edges_original[0]
     min_target = edges_target[0]
     nbinsx = edges_original.size - 1
     nbinsy = edges_target.size - 1
@@ -104,38 +96,36 @@ def _axisdistortion_python(
     threshold = -1e10
     # left_axis = 0
     right_axis = 0
-    idxx0, idxx1, idxy = -1, -1, 0
-    leftx_fine, lefty_fine = threshold, threshold
-    while (
-        leftx_fine <= threshold or leftx_fine < min_original or lefty_fine < min_target
-    ):
-        left_edge_from_x = edges_original[idxx0 + 1] < edges_backwards[idxx1 + 1]
+    idxy0, idxy1, idxy = -1, -1, 0
+    # leftx_fine = threshold
+    lefty_fine = threshold
+    while idxy0 < 0 or lefty_fine <= threshold or lefty_fine < min_target:
+        left_edge_from_x = edges_modified[idxy0 + 1] < edges_target[idxy1 + 1]
         if left_edge_from_x:
-            leftx_fine, lefty_fine = (
-                edges_original[idxx0 + 1],
-                edges_modified[idxx0 + 1],
-            )
+            # leftx_fine = edges_original[idxy0 + 1]
+            lefty_fine = edges_modified[idxy0 + 1]
             # left_axis = 0
-            if (idxx0 := idxx0 + 1) >= nbinsx:
+            if (idxy0 := idxy0 + 1) >= nbinsx:
                 return
         else:
-            leftx_fine, lefty_fine = edges_backwards[idxx1 + 1], edges_target[idxx1 + 1]
+            # leftx_fine = -1
+            lefty_fine = edges_target[idxy1 + 1]
             # left_axis = 1
-            if (idxx1 := idxx1 + 1) >= nbinsx:
+            if (idxy1 := idxy1 + 1) >= nbinsy:
                 return
 
-    width_coarse = edges_original[idxx0 + 1] - edges_original[idxx0]
+    width_coarse = edges_modified[idxy0 + 1] - edges_modified[idxy0]
     while True:
-        right_orig = edges_original[idxx0 + 1]
-        right_backwards = edges_backwards[idxx1 + 1]
+        right_modified = edges_modified[idxy0 + 1]
+        right_target = edges_target[idxy1 + 1]
 
-        if right_orig < right_backwards:
-            rightx_fine = right_orig
-            righty_fine = edges_modified[idxx0 + 1]
+        if right_modified < right_target:
+            righty_fine = right_modified
+            # rightx_fine = edges_original[idxy0 + 1]
             right_axis = 0
         else:
-            rightx_fine = right_backwards
-            righty_fine = edges_target[idxx1 + 1]
+            righty_fine = right_target
+            # rightx_fine = -1
             right_axis = 1
 
         while lefty_fine >= edges_target[idxy + 1]:
@@ -146,31 +136,32 @@ def _axisdistortion_python(
         ## Uncomment the following lines to see the debug output
         ## (you need to also uncomment all the `left_axis` lines)
         ##
-        # width_fine = rightx_fine-leftx_fine
+        # width_fine = righty_fine-lefty_fine
         # factor = width_fine/width_coarse
         # print(
-        #         f"x:{leftx_fine:8.4f}→{rightx_fine:8.4f}="
+        #         f"x:{leftx_fine:8.4f}→{rightx_fine:8.4f} "
+        #         f"ax:{left_axis}→{right_axis} idxy:{idxy0: 4d},{idxy1: 4d} idxy: {idxy: 4d} "
+        #         f"y:{lefty_fine:8.4f}→{righty_fine:8.4f}="
         #         f"{width_fine:8.4f}/{width_coarse:8.4f}={factor:8.4g} "
-        #         f"ax:{left_axis}→{right_axis} idxx:{idxx0: 4d},{idxx1: 4d} idxy: {idxy: 4d} "
-        #         f"y:{lefty_fine:8.4f}→{righty_fine:8.4f}"
         # )
 
-        matrix[idxy, idxx0] = (rightx_fine - leftx_fine) / width_coarse
+        matrix[idxy, idxy0] = (righty_fine - lefty_fine) / width_coarse
 
         if right_axis == 0:
-            if (idxx0 := idxx0 + 1) >= nbinsx:
+            if (idxy0 := idxy0 + 1) >= nbinsx:
                 break
-            width_coarse = edges_original[idxx0 + 1] - edges_original[idxx0]
-        elif (idxx1 := idxx1 + 1) >= nbinsx:
+            width_coarse = edges_modified[idxy0 + 1] - edges_modified[idxy0]
+        elif (idxy1 := idxy1 + 1) >= nbinsx:
             break
-        leftx_fine, lefty_fine = rightx_fine, righty_fine
+        lefty_fine = righty_fine
+        # leftx_fine = rightx_fine
         # left_axis = right_axis
 
 
-from collections.abc import Callable
+from typing import Callable
 
 from numba import njit
 
-_axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(
+_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray], None] = njit(
     cache=True
-)(_axisdistortion_python)
+)(_axisdistortion_linear_python)
