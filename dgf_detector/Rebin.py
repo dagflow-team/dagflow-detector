@@ -99,7 +99,7 @@ class Rebin(MetaNode):
             },
         path: str | None = None,
         labels: Mapping = {},
-        replicate: tuple[KeyLike, ...] = ((),),
+        replicate_outputs: tuple[KeyLike, ...] = ((),),
         **kwargs
     ) -> tuple[Rebin, NodeStorage]:
         storage = NodeStorage(default_containers=True)
@@ -126,7 +126,7 @@ class Rebin(MetaNode):
         outputs[key_RebinMatrix] = _RebinMatrix.outputs["matrix"]
 
         label_int = labels.get("Rebin", {})
-        for key in replicate:
+        for key in replicate_outputs:
             if isinstance(key, str):
                 key = (key,)
 

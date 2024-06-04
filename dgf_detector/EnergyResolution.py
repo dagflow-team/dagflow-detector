@@ -106,7 +106,7 @@ class EnergyResolution(MetaNode):
             _BinCenter.outputs["Energy"] >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
             _EnergyResolutionSigmaRelABC._RelSigma >> _EnergyResolutionMatrixBC.inputs["RelSigma"]
 
-    # TODO: check this again; what should be in replicate argument: all the nodes or only main?
+    # TODO: check this again; what should be in replicate_outputs argument: all the nodes or only main?
     @classmethod
     def replicate(
         cls,
@@ -119,7 +119,7 @@ class EnergyResolution(MetaNode):
             },
         path: str | None = None,
         labels: Mapping = {},
-        replicate: tuple[KeyLike, ...] = ((),),
+        replicate_outputs: tuple[KeyLike, ...] = ((),),
     ) -> tuple[EnergyResolution, NodeStorage]:
         storage = NodeStorage(default_containers=True)
         nodes = storage("nodes")
@@ -156,7 +156,7 @@ class EnergyResolution(MetaNode):
         out_bincenter >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
 
         label_int = labels.get("EnergyResolution", {})
-        for key in replicate:
+        for key in replicate_outputs:
             if isinstance(key, str):
                 key = (key,)
             name = ".".join(key_EnergyResolutionMatrixBC + key)
