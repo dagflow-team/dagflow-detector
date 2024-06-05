@@ -1,5 +1,4 @@
-
-from numpy import arange, concatenate, linspace
+from numpy import arange
 from numpy.typing import NDArray
 from scipy.interpolate import interp1d
 
@@ -51,7 +50,7 @@ class RefineGraph:
     def make_x(self) -> None:
         self.xfine = arange(0.0, 12.0000001, 0.05)
 
-    def _process_x(self):
+    def _process_x(self) -> None:
         self.make_x()
 
     def process(self, y: NDArray, nominal: NDArray) -> NDArray:
