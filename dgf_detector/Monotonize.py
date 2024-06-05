@@ -1,13 +1,11 @@
 from typing import TYPE_CHECKING
 
-from dagflow.exception import InitializationError
-from dagflow.nodes import FunctionNode
-from numba import float64
-from numba import int64
-from numba import njit
-from numba import void
+from numba import float64, int64, njit, void
 from numpy import double
 from numpy.typing import NDArray
+
+from dagflow.exception import InitializationError
+from dagflow.nodes import FunctionNode
 
 if TYPE_CHECKING:
     from dagflow.input import Input
@@ -112,9 +110,9 @@ class Monotonize(FunctionNode):
         **kwargs,
     ) -> None:
         super().__init__(name, *args, **kwargs, allowed_kw_inputs=("y", "x"))
-        if gradient>0.0:
+        if gradient > 0.0:
             self._labels.setdefault("mark", "↗")
-        elif gradient<0.0:
+        elif gradient < 0.0:
             self._labels.setdefault("mark", "↘")
         else:
             self._labels.setdefault("mark", "→")
@@ -130,7 +128,9 @@ class Monotonize(FunctionNode):
             self._x = self._add_input("x", positional=False)  # input: "x"
         self._y = self._add_input("y", positional=True)  # input: "y"
         self._result = self._add_output("result")  # output: 0
-        self._functions.update({"with_x": self._fcn_with_x, "without_x": self._fcn_without_x})
+        self._functions.update(
+            {"with_x": self._fcn_with_x, "without_x": self._fcn_without_x}
+        )
 
     @property
     def gradient(self) -> float:
