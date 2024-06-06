@@ -1,13 +1,11 @@
 from typing import TYPE_CHECKING
 
-from dagflow.exception import InitializationError
-from dagflow.nodes import FunctionNode
-from numba import float64
-from numba import int64
-from numba import njit
-from numba import void
+from numba import float64, int64, njit, void
 from numpy import double
 from numpy.typing import NDArray
+
+from dagflow.exception import InitializationError
+from dagflow.nodes import FunctionNode
 
 if TYPE_CHECKING:
     from dagflow.input import Input
@@ -93,9 +91,10 @@ class Monotonize(FunctionNode):
         `gradient`: set gradient to monotonize (takes absolute value)
     """
 
-    __slots__ = ("_y", "_result", "_index_fraction", "_gradient", "_index")
+    __slots__ = ("_y", "_x", "_result", "_index_fraction", "_gradient", "_index")
 
     _y: "Input"
+    _x: "Input"
     _result: "Output"
     _index_fraction: float
     _gradient: float
@@ -104,21 +103,20 @@ class Monotonize(FunctionNode):
     def __init__(
         self,
         name,
+        *args,
+        with_x: bool = False,
         index_fraction: float = 0,
         gradient: float = 0,
-        *args,
         **kwargs,
     ) -> None:
         super().__init__(name, *args, **kwargs, allowed_kw_inputs=("y", "x"))
-        # TODO: set labels
-        # self.labels.setdefaults(
-        #    {
-        #        "text": "",
-        #        "plottitle": "",
-        #        "latex": "",
-        #        "axis": "",
-        #    }
-        # )
+        if gradient > 0.0:
+            self._labels.setdefault("mark", "↗")
+        elif gradient < 0.0:
+            self._labels.setdefault("mark", "↘")
+        else:
+            self._labels.setdefault("mark", "→")
+
         if index_fraction < 0 or index_fraction >= 1:
             raise InitializationError(
                 f"`index_fraction` must be 0 <= x < 1, but given {index_fraction}",
@@ -126,9 +124,13 @@ class Monotonize(FunctionNode):
             )
         self._index_fraction = index_fraction
         self._gradient = abs(gradient)
-        self._y = self._add_input("y", positional=False)  # input: "y"
+        if with_x:
+            self._x = self._add_input("x", positional=False)  # input: "x"
+        self._y = self._add_input("y", positional=True)  # input: "y"
         self._result = self._add_output("result")  # output: 0
-        self._functions.update({"with_x": self._fcn_with_x, "without_x": self._fcn_without_x})
+        self._functions.update(
+            {"with_x": self._fcn_with_x, "without_x": self._fcn_without_x}
+        )
 
     @property
     def gradient(self) -> float:
@@ -143,14 +145,14 @@ class Monotonize(FunctionNode):
         return self._index
 
     def _fcn_with_x(self) -> None:
-        y = self.inputs["y"].data
-        x = self.inputs["x"].data
-        result = self.outputs["result"].data
+        x = self._x.data
+        y = self._y.data
+        result = self._result.data
         _monotonize_with_x(x, y, result, self.gradient, self.index)
 
     def _fcn_without_x(self) -> None:
-        y = self.inputs["y"].data
-        result = self.inputs["result"].data
+        y = self._y.data
+        result = self._result.data
         _monotonize_without_x(y, result, self.gradient, self.index)
 
     def _typefunc(self) -> None:
@@ -161,7 +163,8 @@ class Monotonize(FunctionNode):
             copy_from_input_to_output,
         )
 
-        isGivenX = self.inputs.get("x") is not None
+        self._x = self.inputs.get("x")
+        isGivenX = self._x is not None
         inputsToCheck = ("x", "y") if isGivenX else "y"
 
         check_input_dimension(self, inputsToCheck, 1)
