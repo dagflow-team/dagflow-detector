@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Literal
 
 from numba import njit
 from numpy import allclose, finfo, isclose
-from numpy.typing import NDArray
 
 from dagflow.exception import InitializationError
 from dagflow.inputhandler import MissingInputAdd
 from dagflow.nodes import FunctionNode
-from dagflow.typefunctions import AllPositionals
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from numpy.typing import NDArray
+
     from dagflow.input import Input
     from dagflow.output import Output
 
@@ -45,7 +46,7 @@ class RebinMatrix(FunctionNode):
     def __init__(
         self,
         *args,
-        atol: float = finfo("d").resolution * 10,
+        atol: float = float(finfo("d").resolution) * 10.0,
         rtol: float = 0.0,
         mode: RebinModesType = "numba",
         **kwargs,
@@ -97,9 +98,9 @@ class RebinMatrix(FunctionNode):
         )
         if ret[0] > 0:
             self.__raise_exception_at_wrong_edges(*ret)
-        for input in self._edges_old_clones:
+        for i, input in enumerate(self._edges_old_clones):
             if not allclose(edges_old, input.data, atol=self._atol, rtol=self._rtol):
-                raise RuntimeError()
+                raise RuntimeError(f"Clones of old edges are inconsistent (input {i})")
 
     def _fcn_numba(self):
         edges_old = self._edges_old.data
@@ -112,9 +113,9 @@ class RebinMatrix(FunctionNode):
         )
         if ret[0] > 0:
             self.__raise_exception_at_wrong_edges(*ret)
-        for input in self._edges_old_clones:
+        for i, input in enumerate(self._edges_old_clones):
             if not allclose(edges_old, input.data, atol=self._atol, rtol=self._rtol):
-                raise RuntimeError()
+                raise RuntimeError(f"Clones of old edges are inconsistent (input {i})")
 
     def __raise_exception_at_wrong_edges(
         self, retcode, iold, edge_old, inew, edge_new
@@ -124,8 +125,8 @@ class RebinMatrix(FunctionNode):
         edges_kind = (
             "first edge is before old first",
             "last edge is after the old last",
-            # "old bins ended",
             "inconsistent new edge",
+            "old edges (clones) are not consistent",
         )[retcode - 1]
         raise RuntimeError(
             f"Inconsistent edges ({edges_kind}): old {iold} {edge_old}, new {inew} {edge_new}, diff {edge_old-edge_new:.2g}"
