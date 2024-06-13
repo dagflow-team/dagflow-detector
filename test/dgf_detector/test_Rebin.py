@@ -25,7 +25,8 @@ def partial_sum(y_old: NDArray, stride: int) -> list:
 @mark.parametrize("start", (0, 1))
 @mark.parametrize("stride", (2, 4))
 @mark.parametrize("mode", ("python", "numba"))
-def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str):
+@mark.parametrize("nclones", (0, 2))
+def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nclones: int):
     n = 21
     edges_old = linspace(0.0, 2.0, n, dtype=dtype)
     edges_new = edges_old[start::stride]
@@ -41,9 +42,18 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str):
 
         EdgesOld >> metanode.inputs["edges_old"]
         EdgesNew >> metanode.inputs["edges_new"]
+
+        for iclone in range(nclones):
+            EdgesOld_i = Array(f"edges_old_{iclone+1}", edges_old)
+            EdgesOld_i >> metanode
+
+            for matrix in metanode._RebinMatrixList:
+                EdgesOld_i >> matrix
+
         Y >> metanode()
         Y2 >> metanode()
-        metanode.print()
+        # metanode.print()
+        # metanode._RebinMatrixList[0].print()
 
     mat = metanode.outputs["matrix"].data
     # NOTE: Asserts below are only for current edges_new! For other binning it may not coincide!
@@ -109,4 +119,23 @@ def test_RebinMatrix_wrong_edges_new(edges_new, mode):
         EdgesOld >> mat("edges_old")
         EdgesNew >> mat("edges_new")
     with raises(Exception):
+        mat.get_data()
+
+@mark.parametrize("mode", ("python", "numba"))
+def test_RebinMatrix_wrong_edges_new(mode):
+    edges_old = linspace(0.0, 2.0, 21)
+    edges_new = edges_old[0::2]
+    edges_clone = edges_old.copy()
+    edges_clone[0]-=1
+    with Graph(close=True):
+        EdgesOld = Array("edges_old", edges_old)
+        EdgesNew = Array("edges_new", edges_new)
+        EdgesClone = Array("edges_clone", edges_clone)
+        mat = RebinMatrix("Rebin Matrix", mode=mode)
+        EdgesOld >> mat("edges_old")
+        EdgesNew >> mat("edges_new")
+        EdgesClone >> mat
+
+    # mat.print()
+    with raises(RuntimeError):
         mat.get_data()
