@@ -94,7 +94,7 @@ class RefineGraph:
         if skip_diff:
             return yunbound
 
-        return self._method_diff(yunbound, nominal)
+        return self._method_diff(nominal, yunbound)
 
     def _method_reltoabs(self, yrel: NDArray) -> NDArray:
         return yrel * self.xcoarse

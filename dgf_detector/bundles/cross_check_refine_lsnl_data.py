@@ -61,7 +61,7 @@ class RefineGraph:
         if skip_diff:
             return yabs
 
-        return self._method_diff(yabs, nominal)
+        return self._method_diff(nominal, yabs)
 
     def _method_reltoabs(self, yrel: NDArray) -> NDArray:
         return yrel * self.xfine
