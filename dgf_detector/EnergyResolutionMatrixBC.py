@@ -42,7 +42,9 @@ def _resolution(
             rEvents = dErec * __resolution(Etrue, Erec, relsigma)
             if rEvents < minEvents:
                 if isRightEdge:
+                    Result[jrec:,itrue] = 0.0
                     break
+                Result[jrec,itrue] = 0.0
                 continue
             isRightEdge = True
             Result[jrec, itrue] = rEvents
