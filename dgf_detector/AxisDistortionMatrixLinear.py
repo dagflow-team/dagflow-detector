@@ -141,7 +141,7 @@ def _axisdistortion_linear_python(
         # print(
         #         f"x:{leftx_fine:8.4f}→{rightx_fine:8.4f} "
         #         f"ax:{left_axis}→{right_axis} idxy:{idxy0: 4d},{idxy1: 4d} idxy: {idxy: 4d} "
-        #         f"y:{lefty_fine:8.4f}→{righty_fine:8.4f}="
+        #         f"y:{lefty_fine:8.4f}→{righty_fine:8.4f}/{edges_modified[idxy0]:8.4f}→{edges_modified[idxy0+1]:8.4f}="
         #         f"{width_fine:8.4f}/{width_coarse:8.4f}={factor:8.4g} "
         # )
 
