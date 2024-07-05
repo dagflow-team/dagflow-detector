@@ -58,10 +58,7 @@ class RefineGraph:
         yfine = self._method_interpolate(y)
         yabs = self._method_reltoabs(yfine)
 
-        if skip_diff:
-            return yabs
-
-        return self._method_diff(nominal, yabs)
+        return yabs if skip_diff else self._method_diff(nominal, yabs)
 
     def _method_reltoabs(self, yrel: NDArray) -> NDArray:
         return yrel * self.xfine
@@ -77,7 +74,4 @@ class RefineGraph:
         return fcn(self.xfine)
 
     def _method_diff(self, nominal: NDArray, y: NDArray) -> NDArray:
-        if nominal is y:
-            return nominal
-
-        return y - nominal
+        return nominal if nominal is y else y - nominal
