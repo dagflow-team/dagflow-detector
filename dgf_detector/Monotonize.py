@@ -1,21 +1,13 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from numba import float64, int64, njit, void
+from numpy import double
+from numpy.typing import NDArray
 
 from dagflow.exception import InitializationError
-from dagflow.node import Node
-from dagflow.typefunctions import (
-    check_input_dimension,
-    check_inputs_same_shape,
-    copy_from_input_to_output,
-)
+from dagflow.nodes import FunctionNode
 
 if TYPE_CHECKING:
-    from numpy import double
-    from numpy.typing import NDArray
-
     from dagflow.input import Input
     from dagflow.output import Output
 
@@ -83,7 +75,7 @@ def _monotonize_without_x(
         i -= 1
 
 
-class Monotonize(Node):
+class Monotonize(FunctionNode):
     r"""
     Monotonizes a function.
 
@@ -101,9 +93,9 @@ class Monotonize(Node):
 
     __slots__ = ("_y", "_x", "_result", "_index_fraction", "_gradient", "_index")
 
-    _y: Input
-    _x: Input
-    _result: Output
+    _y: "Input"
+    _x: "Input"
+    _result: "Output"
     _index_fraction: float
     _gradient: float
     _index: int
@@ -136,7 +128,9 @@ class Monotonize(Node):
             self._x = self._add_input("x", positional=False)  # input: "x"
         self._y = self._add_input("y", positional=True)  # input: "y"
         self._result = self._add_output("result")  # output: 0
-        self._functions.update({"with_x": self._fcn_with_x, "without_x": self._fcn_without_x})
+        self._functions.update(
+            {"with_x": self._fcn_with_x, "without_x": self._fcn_without_x}
+        )
 
     @property
     def gradient(self) -> float:
@@ -163,6 +157,12 @@ class Monotonize(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
+        from dagflow.typefunctions import (
+            check_input_dimension,
+            check_inputs_same_shape,
+            copy_from_input_to_output,
+        )
+
         self._x = self.inputs.get("x")
         isGivenX = self._x is not None
         inputsToCheck = ("x", "y") if isGivenX else "y"

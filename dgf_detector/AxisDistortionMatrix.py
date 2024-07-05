@@ -1,27 +1,15 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
-from dagflow.node import Node
-from dagflow.typefunctions import (
-    check_input_dimension,
-    check_input_size,
-    check_inputs_same_dtype,
-    check_inputs_same_shape,
-    copy_input_dtype_to_output,
-    eval_output_dtype,
-)
+from numpy.typing import NDArray
+
+from dagflow.nodes import FunctionNode
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from numpy.typing import NDArray
-
     from dagflow.input import Input
     from dagflow.output import Output
 
 
-class AxisDistortionMatrix(Node):
+class AxisDistortionMatrix(FunctionNode):
     """For a given historam and distorted X axis compute the conversion matrix"""
 
     __slots__ = (
@@ -31,10 +19,10 @@ class AxisDistortionMatrix(Node):
         "_result",
     )
 
-    _edges_original: Input
-    _edges_modified: Input
-    _edges_backward: Input
-    _result: Output
+    _edges_original: "Input"
+    _edges_modified: "Input"
+    _edges_backward: "Input"
+    _result: "Output"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,7 +33,9 @@ class AxisDistortionMatrix(Node):
         )
         self._edges_original = self._add_input("EdgesOriginal", positional=False)
         self._edges_modified = self._add_input("EdgesModified", positional=False)
-        self._edges_backward = self._add_input("EdgesModifiedBackwards", positional=False)
+        self._edges_backward = self._add_input(
+            "EdgesModifiedBackwards", positional=False
+        )
         self._result = self._add_output("matrix")  # output: 0
 
         self._functions.update(
@@ -73,6 +63,15 @@ class AxisDistortionMatrix(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
+        from dagflow.typefunctions import (
+            check_input_dimension,
+            check_input_size,
+            check_inputs_same_dtype,
+            check_inputs_same_shape,
+            copy_input_dtype_to_output,
+            eval_output_dtype,
+        )
+
         names_edges = ("EdgesOriginal", "EdgesModified", "EdgesModifiedBackwards")
         check_input_dimension(self, names_edges, 1)
         check_inputs_same_dtype(self, names_edges)
@@ -107,7 +106,9 @@ def _axisdistortion_python(
     right_axis = 0
     idxx0, idxx1, idxy = -1, -1, 0
     leftx_fine, lefty_fine = threshold, threshold
-    while leftx_fine <= threshold or leftx_fine < min_original or lefty_fine < min_target:
+    while (
+        leftx_fine <= threshold or leftx_fine < min_original or lefty_fine < min_target
+    ):
         left_edge_from_x = edges_original[idxx0 + 1] < edges_backwards[idxx1 + 1]
         if left_edge_from_x:
             leftx_fine, lefty_fine = (
@@ -166,8 +167,10 @@ def _axisdistortion_python(
         # left_axis = right_axis
 
 
+from collections.abc import Callable
+
 from numba import njit
 
-_axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(cache=True)(
-    _axisdistortion_python
-)
+_axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(
+    cache=True
+)(_axisdistortion_python)

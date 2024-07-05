@@ -1,23 +1,16 @@
-from __future__ import annotations
-
-from math import exp, sqrt
+from math import exp
+from math import sqrt
 from typing import TYPE_CHECKING
 
-from numba import float64, njit, void
+from dagflow.nodes import FunctionNode
+from numba import float64
+from numba import njit
+from numba import void
+from numpy import double
 from numpy import pi
-
-from dagflow.node import Node
-from dagflow.typefunctions import (
-    AllPositionals,
-    check_input_dimension,
-    check_input_size,
-    find_max_size_of_inputs,
-)
+from numpy.typing import NDArray
 
 if TYPE_CHECKING:
-    from numpy import double
-    from numpy.typing import NDArray
-
     from dagflow.input import Input
     from dagflow.output import Output
 
@@ -49,15 +42,15 @@ def _resolution(
             rEvents = dErec * __resolution(Etrue, Erec, relsigma)
             if rEvents < minEvents:
                 if isRightEdge:
-                    Result[jrec:, itrue] = 0.0
+                    Result[jrec:,itrue] = 0.0
                     break
-                Result[jrec, itrue] = 0.0
+                Result[jrec,itrue] = 0.0
                 continue
             isRightEdge = True
             Result[jrec, itrue] = rEvents
 
 
-class EnergyResolutionMatrixBC(Node):
+class EnergyResolutionMatrixBC(FunctionNode):
     """
     Energy resolution
 
@@ -71,9 +64,9 @@ class EnergyResolutionMatrixBC(Node):
 
     __slots__ = ("_Edges", "_RelSigma", "_SmearMatrix", "_minEvents")
 
-    _Edges: Input
-    _RelSigma: Input
-    _SmearMatrix: Output
+    _Edges: "Input"
+    _RelSigma: "Input"
+    _SmearMatrix: "Output"
     _minEvents: float
 
     def __init__(self, name, minEvents: float = 1e-10, *args, **kwargs):
@@ -105,6 +98,13 @@ class EnergyResolutionMatrixBC(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
+        from dagflow.typefunctions import (
+            check_input_dimension,
+            find_max_size_of_inputs,
+            check_input_size,
+            AllPositionals,
+        )
+
         check_input_dimension(self, AllPositionals, 1)
         size = find_max_size_of_inputs(self, "RelSigma")
         check_input_size(self, "Edges", exact=size + 1)

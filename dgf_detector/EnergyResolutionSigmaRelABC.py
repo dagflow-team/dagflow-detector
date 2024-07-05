@@ -1,23 +1,14 @@
-from __future__ import annotations
-
 from math import sqrt
 from typing import TYPE_CHECKING
 
-from numba import float64, njit, void
-
-from dagflow.node import Node
-from dagflow.typefunctions import (
-    AllPositionals,
-    assign_output_axes_from_inputs,
-    check_input_dimension,
-    check_input_shape,
-    copy_from_input_to_output,
-)
+from dagflow.nodes import FunctionNode
+from numba import float64
+from numba import njit
+from numba import void
+from numpy import double
+from numpy.typing import NDArray
 
 if TYPE_CHECKING:
-    from numpy import double
-    from numpy.typing import NDArray
-
     from dagflow.input import Input
     from dagflow.output import Output
 
@@ -42,10 +33,12 @@ def _RelSigma(
     a2 = a**2
     b2 = b**2
     for i in range(len(Energy)):
-        Sigma[i] = sqrt(a2 + b2 / Energy[i] + (c / Energy[i]) ** 2)  # sqrt(a^2 + b^2/E + c^2/E^2)
+        Sigma[i] = sqrt(
+            a2 + b2 / Energy[i] + (c / Energy[i]) ** 2
+        )  # sqrt(a^2 + b^2/E + c^2/E^2)
 
 
-class EnergyResolutionSigmaRelABC(Node):
+class EnergyResolutionSigmaRelABC(FunctionNode):
     r"""
     Energy resolution $\sqrt(a^2 + b^2/E + c^2/E^2)$
 
@@ -61,11 +54,11 @@ class EnergyResolutionSigmaRelABC(Node):
 
     __slots__ = ("_a_nonuniform", "_b_stat", "_c_noise", "_Energy", "_RelSigma")
 
-    _a_nonuniform: Input
-    _b_stat: Input
-    _c_noise: Input
-    _Energy: Input
-    _RelSigma: Output
+    _a_nonuniform: "Input"
+    _b_stat: "Input"
+    _c_noise: "Input"
+    _Energy: "Input"
+    _RelSigma: "Output"
 
     def __init__(self, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
@@ -76,11 +69,9 @@ class EnergyResolutionSigmaRelABC(Node):
                 "axis": r"$\sigma/E$",
             }
         )
-        self._a_nonuniform, self._b_stat, self._c_noise = (
-            self._add_inputs(  # pyright: ignore reportGeneralTypeIssues
-                ("a_nonuniform", "b_stat", "c_noise"), positional=False
+        self._a_nonuniform, self._b_stat, self._c_noise = self._add_inputs( # pyright: ignore reportGeneralTypeIssues
+            ("a_nonuniform", "b_stat", "c_noise"), positional=False
             )
-        )
         self._Energy = self._add_input("Energy")  # input: 0
         self._RelSigma = self._add_output("RelSigma")  # output: 0
 
@@ -95,6 +86,14 @@ class EnergyResolutionSigmaRelABC(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
+        from dagflow.typefunctions import (
+            AllPositionals,
+            assign_output_axes_from_inputs,
+            check_input_dimension,
+            check_input_shape,
+            copy_from_input_to_output,
+        )
+
         check_input_shape(self, ("a_nonuniform", "b_stat", "c_noise"), (1,))
         check_input_dimension(self, AllPositionals, 1)
         copy_from_input_to_output(self, "Energy", "RelSigma")

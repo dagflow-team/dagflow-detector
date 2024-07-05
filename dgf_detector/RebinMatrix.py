@@ -7,13 +7,7 @@ from numpy import allclose, finfo, isclose
 
 from dagflow.exception import InitializationError
 from dagflow.inputhandler import MissingInputAdd
-from dagflow.node import Node
-from dagflow.typefunctions import (
-    AllPositionals,
-    assign_output_edges,
-    check_input_dimension,
-    check_inputs_equivalence,
-)
+from dagflow.nodes import FunctionNode
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -28,7 +22,7 @@ RebinModes = {"python", "numba"}
 RebinModesType = Literal[RebinModes]
 
 
-class RebinMatrix(Node):
+class RebinMatrix(FunctionNode):
     """For a given `edges_old` and `edges_new` computes the conversion matrix"""
 
     __slots__ = (
@@ -69,7 +63,9 @@ class RebinMatrix(Node):
             }
         )
         if mode not in RebinModes:
-            raise InitializationError(f"mode must be in {RebinModes}, but given {mode}!", node=self)
+            raise InitializationError(
+                f"mode must be in {RebinModes}, but given {mode}!", node=self
+            )
         self._mode = mode
         self._atol = atol
         self._rtol = rtol
@@ -121,7 +117,9 @@ class RebinMatrix(Node):
             if not allclose(edges_old, input.data, atol=self._atol, rtol=self._rtol):
                 raise RuntimeError(f"Clones of old edges are inconsistent (input {i})")
 
-    def __raise_exception_at_wrong_edges(self, retcode, iold, edge_old, inew, edge_new) -> None:
+    def __raise_exception_at_wrong_edges(
+        self, retcode, iold, edge_old, inew, edge_new
+    ) -> None:
         print("Old edges:", self._edges_old.dd.size, self._edges_old.data)
         print("New edges:", self._edges_new.dd.size, self._edges_new.data)
         edges_kind = (
@@ -136,8 +134,17 @@ class RebinMatrix(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
+        from dagflow.typefunctions import (
+            AllPositionals,
+            assign_output_edges,
+            check_input_dimension,
+            check_inputs_equivalence,
+        )
+
         check_input_dimension(self, ("edges_old", "edges_new"), 1)
-        check_inputs_equivalence(self, AllPositionals, check_dtype=True, check_shape=True)
+        check_inputs_equivalence(
+            self, AllPositionals, check_dtype=True, check_shape=True
+        )
         self._result.dd.shape = (
             self._edges_new.dd.size - 1,
             self._edges_old.dd.size - 1,
@@ -163,9 +170,13 @@ def _calc_rebin_matrix_python(
     C = [Nx1]
     """
 
-    if edges_new[0] < edges_old[0] and not isclose(edges_new[0], edges_old[0], atol=atol, rtol=rtol):
+    if edges_new[0] < edges_old[0] and not isclose(
+        edges_new[0], edges_old[0], atol=atol, rtol=rtol
+    ):
         return 1, 0, edges_old[0], 0, edges_new[0]
-    if edges_new[-1] > edges_old[-1] and not isclose(edges_new[-1], edges_old[-1], atol=atol, rtol=rtol):
+    if edges_new[-1] > edges_old[-1] and not isclose(
+        edges_new[-1], edges_old[-1], atol=atol, rtol=rtol
+    ):
         return 2, -1, edges_old[-1], -1, edges_new[-1]
 
     inew = 0
@@ -177,8 +188,12 @@ def _calc_rebin_matrix_python(
     stepper_old = enumerate(edges_old)
     iold, edge_old = next(stepper_old)
     for inew, edge_new in enumerate(edges_new[1:], 1):
-        while edge_old < edge_new and not isclose(edge_new, edge_old, atol=atol, rtol=rtol):
-            if edge_old >= edge_new_prev or isclose(edge_old, edge_new_prev, atol=atol, rtol=rtol):
+        while edge_old < edge_new and not isclose(
+            edge_new, edge_old, atol=atol, rtol=rtol
+        ):
+            if edge_old >= edge_new_prev or isclose(
+                edge_old, edge_new_prev, atol=atol, rtol=rtol
+            ):
                 rebin_matrix[inew - 1, iold] = 1.0
 
             iold, edge_old = next(stepper_old)

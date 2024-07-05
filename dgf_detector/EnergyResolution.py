@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from dagflow.exception import ConnectionError
@@ -8,12 +9,10 @@ from dagflow.metanode import MetaNode
 from dagflow.storage import NodeStorage
 from dgf_detector.EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
 from dgf_detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
+from multikeydict.typing import KeyLike
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from dagflow.node import Node
-    from multikeydict.typing import KeyLike
 
 
 class EnergyResolution(MetaNode):
@@ -117,7 +116,7 @@ class EnergyResolution(MetaNode):
             "EnergyResolutionMatrixBC": "matrix",
             "Edges": "e_edges",
             "BinCenter": "e_bincenter",
-        },
+            },
         path: str | None = None,
         labels: Mapping = {},
         replicate_outputs: tuple[KeyLike, ...] = ((),),
@@ -151,7 +150,7 @@ class EnergyResolution(MetaNode):
         _BinCenter = instance.add_BinCenter("BinCenter", labels.get("BinCenter", {}))
         nodes[key_BinCenter] = _BinCenter
         inputs[key_Edges] = _BinCenter.inputs[0]
-        outputs[key_BinCenter] = (out_bincenter := _BinCenter.outputs[0])
+        outputs[key_BinCenter] = (out_bincenter:=_BinCenter.outputs[0])
 
         out_relsigma = _EnergyResolutionSigmaRelABC.outputs["RelSigma"]
         out_bincenter >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
