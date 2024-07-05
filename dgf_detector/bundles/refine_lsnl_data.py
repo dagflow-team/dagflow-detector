@@ -1,4 +1,3 @@
-
 from numpy import arange, concatenate, linspace
 from numpy.typing import NDArray
 from scipy.interpolate import interp1d
@@ -6,9 +5,7 @@ from scipy.interpolate import interp1d
 from multikeydict.nestedmkdict import NestedMKDict
 
 
-def refine_lsnl_data(
-    storage: NestedMKDict, *, edepname: str, nominalname: str, **kwargs
-) -> None:
+def refine_lsnl_data(storage: NestedMKDict, *, edepname: str, nominalname: str, **kwargs) -> None:
     xcoarse = storage[edepname]
 
     refiner = RefineGraph(xcoarse, **kwargs)
@@ -74,9 +71,7 @@ class RefineGraph:
 
         if self.newmax is not None:
             stepright = self.xfine_bound[-1] - self.xfine_bound[-2]
-            xstack[-1] = arange(
-                self.xfine_bound[-1], self.newmax + stepright * 1.0e-6, stepright
-            )[1:]
+            xstack[-1] = arange(self.xfine_bound[-1], self.newmax + stepright * 1.0e-6, stepright)[1:]
 
         self.xfine_extended = concatenate(xstack)
         self.xfine_extended_stack = tuple(xstack)
@@ -91,10 +86,7 @@ class RefineGraph:
         yfine = self._method_interpolate(yabs)
         yunbound = self._method_extrapolate(yfine)
 
-        if skip_diff:
-            return yunbound
-
-        return self._method_diff(nominal, yunbound)
+        return yunbound if skip_diff else self._method_diff(nominal, yunbound)
 
     def _method_reltoabs(self, yrel: NDArray) -> NDArray:
         return yrel * self.xcoarse
@@ -128,7 +120,4 @@ class RefineGraph:
         return concatenate(ystack)
 
     def _method_diff(self, nominal: NDArray, y: NDArray) -> NDArray:
-        if nominal is y:
-            return nominal
-
-        return y - nominal
+        return nominal if nominal is y else y - nominal

@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from dagflow.exception import ConnectionError
 from dagflow.lib import VectorMatrixProduct
 from dagflow.metanode import MetaNode
 from dagflow.storage import NodeStorage
-from dgf_detector.RebinMatrix import RebinMatrix, RebinModesType
-from multikeydict.typing import KeyLike
+from dgf_detector.RebinMatrix import RebinMatrix
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from dagflow.node import Node
+    from dgf_detector.RebinMatrix import RebinModesType
+    from multikeydict.typing import KeyLike
 
 
 class Rebin(MetaNode):
@@ -21,12 +23,7 @@ class Rebin(MetaNode):
     _VectorMatrixProductList: list[Node]
 
     def __init__(
-        self,
-        *,
-        bare: bool = False,
-        mode: RebinModesType = "numba",
-        labels: Mapping = {},
-        **kwargs
+        self, *, bare: bool = False, mode: RebinModesType = "numba", labels: Mapping = {}, **kwargs
     ):
         super().__init__()
         self._RebinMatrixList = []
@@ -35,19 +32,13 @@ class Rebin(MetaNode):
             return
 
         self.add_RebinMatrix(
-            name="RebinMatrix",
-            mode=mode,
-            label=labels.get("RebinMatrix", {}),
-            **kwargs
+            name="RebinMatrix", mode=mode, label=labels.get("RebinMatrix", {}), **kwargs
         )
         self.add_VectorMatrixProduct("VectorMatrixProduct", labels.get("VectorMatrixProduct", {}))
         self._bind_outputs()
 
     def add_RebinMatrix(
-        self,
-        name: str = "RebinMatrix",
-        mode: RebinModesType = "numba",
-        **kwargs
+        self, name: str = "RebinMatrix", mode: RebinModesType = "numba", **kwargs
     ) -> RebinMatrix:
         _RebinMatrix = RebinMatrix(name=name, mode=mode, **kwargs)
         self._RebinMatrixList.append(_RebinMatrix)
@@ -96,11 +87,11 @@ class Rebin(MetaNode):
         names: Mapping[str, str] = {
             "matrix": "rebin_matrix",
             "product": "vector_matrix_product",
-            },
+        },
         path: str | None = None,
         labels: Mapping = {},
         replicate_outputs: tuple[KeyLike, ...] = ((),),
-        **kwargs
+        **kwargs,
     ) -> tuple[Rebin, NodeStorage]:
         storage = NodeStorage(default_containers=True)
         nodes = storage("nodes")
@@ -108,17 +99,15 @@ class Rebin(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_VectorMatixProduct = tuple(names["product"].split('.'))
-        key_RebinMatrix = tuple(names["matrix"].split('.'))
+        key_VectorMatixProduct = tuple(names["product"].split("."))
+        key_RebinMatrix = tuple(names["matrix"].split("."))
         if path:
             tpath = tuple(path.split("."))
             key_VectorMatixProduct = tpath + key_VectorMatixProduct
             key_RebinMatrix = tpath + key_RebinMatrix
 
         _RebinMatrix = instance.add_RebinMatrix(
-            names["matrix"],
-            label = labels.get("RebinMatrix", {}),
-            **kwargs
+            names["matrix"], label=labels.get("RebinMatrix", {}), **kwargs
         )
         nodes[key_RebinMatrix] = _RebinMatrix
         for iname, input in _RebinMatrix.inputs.iter_kw_items():
