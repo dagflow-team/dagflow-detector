@@ -1,15 +1,27 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from numpy.typing import NDArray
-
-from dagflow.nodes import FunctionNode
+from dagflow.node import Node
+from dagflow.typefunctions import (
+    check_input_dimension,
+    check_input_size,
+    check_inputs_same_dtype,
+    check_inputs_same_shape,
+    copy_input_dtype_to_output,
+    eval_output_dtype,
+)
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from numpy.typing import NDArray
+
     from dagflow.input import Input
     from dagflow.output import Output
 
 
-class AxisDistortionMatrixLinear(FunctionNode):
+class AxisDistortionMatrixLinear(Node):
     """For a given historam and distorted X axis compute the conversion matrix. Distortion is assumed to be linear."""
 
     __slots__ = (
@@ -18,9 +30,9 @@ class AxisDistortionMatrixLinear(FunctionNode):
         "_result",
     )
 
-    _edges_original: "Input"
-    _edges_modified: "Input"
-    _result: "Output"
+    _edges_original: Input
+    _edges_modified: Input
+    _result: Output
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,15 +68,6 @@ class AxisDistortionMatrixLinear(FunctionNode):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
-        from dagflow.typefunctions import (
-            check_input_dimension,
-            check_input_size,
-            check_inputs_same_dtype,
-            check_inputs_same_shape,
-            copy_input_dtype_to_output,
-            eval_output_dtype,
-        )
-
         names_edges = ("EdgesOriginal", "EdgesModified")
         check_input_dimension(self, names_edges, 1)
         check_inputs_same_dtype(self, names_edges)
@@ -158,10 +161,8 @@ def _axisdistortion_linear_python(
         # left_axis = right_axis
 
 
-from typing import Callable
-
 from numba import njit
 
-_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray], None] = njit(
-    cache=True
-)(_axisdistortion_linear_python)
+_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray], None] = njit(cache=True)(
+    _axisdistortion_linear_python
+)

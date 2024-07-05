@@ -2,16 +2,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from numpy.typing import NDArray
-
-from dagflow.nodes import FunctionNode
+from dagflow.node import Node
+from dagflow.typefunctions import (
+    check_input_dimension,
+    check_input_size,
+    check_inputs_same_dtype,
+    check_inputs_same_shape,
+    copy_input_dtype_to_output,
+    eval_output_dtype,
+)
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from numpy.typing import NDArray
+
     from dagflow.input import Input
     from dagflow.output import Output
 
 
-class AxisDistortionMatrixLinearLegacy(FunctionNode):
+class AxisDistortionMatrixLinearLegacy(Node):
     """For a given historam and distorted X axis compute the conversion matrix. Distortion is assumed to be linear.
     This is a legacy version of AxisDistortionMatrixLinear to be compatible with GNA implementation.
     """
@@ -28,7 +38,7 @@ class AxisDistortionMatrixLinearLegacy(FunctionNode):
     _min_value_modified: float
     _result: Output
 
-    def __init__(self, *args, min_value_modified: float=-1.e10, **kwargs):
+    def __init__(self, *args, min_value_modified: float = -1.0e10, **kwargs):
         super().__init__(*args, **kwargs)
         self.labels.setdefaults(
             {
@@ -65,15 +75,6 @@ class AxisDistortionMatrixLinearLegacy(FunctionNode):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
-        from dagflow.typefunctions import (
-            check_input_dimension,
-            check_input_size,
-            check_inputs_same_dtype,
-            check_inputs_same_shape,
-            copy_input_dtype_to_output,
-            eval_output_dtype,
-        )
-
         names_edges = ("EdgesOriginal", "EdgesModified")
         check_input_dimension(self, names_edges, 1)
         check_inputs_same_dtype(self, names_edges)
@@ -89,10 +90,7 @@ class AxisDistortionMatrixLinearLegacy(FunctionNode):
 
 
 def _axisdistortion_linear_python(
-    edges_original: NDArray,
-    edges_modified: NDArray,
-    matrix: NDArray,
-    min_value_modified: float
+    edges_original: NDArray, edges_modified: NDArray, matrix: NDArray, min_value_modified: float
 ):
     # in general, target edges may be different (fine than original), the code should handle it.
     edges_target = edges_original
@@ -173,10 +171,8 @@ def _axisdistortion_linear_python(
         # left_axis = right_axis
 
 
-from typing import Callable
-
 from numba import njit
 
-_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, float], None] = njit(
-    cache=True
-)(_axisdistortion_linear_python)
+_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, float], None] = njit(cache=True)(
+    _axisdistortion_linear_python
+)
