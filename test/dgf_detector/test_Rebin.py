@@ -33,7 +33,7 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nc
     y_old_list = [linspace(3.0, 0.0, n - 1, dtype=dtype), linspace(2.0, 0.0, n - 1, dtype=dtype)]
 
     atol = finfo(dtype).resolution*10
-    with Graph(close=True) as graph:
+    with Graph(close_on_exit=True) as graph:
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)
         Y = Array("Y", y_old_list[0])
@@ -112,7 +112,7 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nc
 @mark.parametrize("mode", ("python", "numba"))
 def test_RebinMatrix_wrong_edges_new(edges_new, mode):
     edges_old = linspace(0.0, 2.0, 21)
-    with Graph(close=True):
+    with Graph(close_on_exit=True):
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)
         mat = RebinMatrix("Rebin Matrix", mode=mode)
@@ -127,7 +127,7 @@ def test_RebinMatrix_wrong_edges_new(mode):
     edges_new = edges_old[0::2]
     edges_clone = edges_old.copy()
     edges_clone[0]-=1
-    with Graph(close=True):
+    with Graph(close_on_exit=True):
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)
         EdgesClone = Array("edges_clone", edges_clone)
