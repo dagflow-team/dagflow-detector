@@ -103,7 +103,7 @@ class Rebin(MetaNode):
         key_RebinMatrix = tuple(names["matrix"].split("."))
         if path:
             tpath = tuple(path.split("."))
-            key_VectorMatixProduct = tpath + key_VectorMatixProduct
+            key_VectorMatrixProduct = tpath + key_VectorMatrixProduct
             key_RebinMatrix = tpath + key_RebinMatrix
 
         _RebinMatrix = instance.add_RebinMatrix(
@@ -119,7 +119,7 @@ class Rebin(MetaNode):
             if isinstance(key, str):
                 key = (key,)
 
-            name = ".".join(key_VectorMatixProduct + key)
+            name = ".".join(key_VectorMatrixProduct + key)
             _VectorMatrixProduct = instance.add_VectorMatrixProduct(name, label_int)
             _VectorMatrixProduct()
             nodes[name] = _VectorMatrixProduct
