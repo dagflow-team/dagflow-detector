@@ -97,7 +97,7 @@ class Rebin(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_VectorMatixProduct = tuple(names["product"].split("."))
+        key_VectorMatrixProduct = tuple(names["product"].split("."))
         key_RebinMatrix = tuple(names["matrix"].split("."))
         if path:
             tpath = tuple(path.split("."))
