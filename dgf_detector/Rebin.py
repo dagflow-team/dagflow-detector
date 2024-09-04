@@ -60,8 +60,6 @@ class Rebin(MetaNode):
             _VectorMatrixProduct,
             inputs_pos=True,
             outputs_pos=True,
-            kw_inputs=["matrix"],
-            merge_inputs=["matrix"],
             missing_inputs=True,
             also_missing_outputs=True,
         )
