@@ -38,7 +38,7 @@ def test_monotonize(
         y = -y
     frac = (len(x) - len(x[mask]) - 1) / len(x)
 
-    with Graph(close=True, debug=debug_graph) as graph:
+    with Graph(close_on_exit=True, debug=debug_graph) as graph:
         X = Array("x", x)
         Y = Array("y", y)
         m = Monotonize(name="monotonize", index_fraction=frac, gradient=gradient)

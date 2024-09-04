@@ -13,7 +13,7 @@ def test_EnergyResolutionSigmaRelABC_v01(debug_graph, testname):
     weights = [0.016, 0.081, 0.026]
     Energy = linspace(1.0, 8.0, 200)
     parnames = ("a_nonuniform", "b_stat", "c_noise")
-    with Graph(close=True, debug=debug_graph) as graph:
+    with Graph(close_on_exit=True, debug=debug_graph) as graph:
         a, b, c = tuple(
             Array(name, [val], mark=name) for name, val in zip(parnames, weights)
         )

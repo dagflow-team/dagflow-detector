@@ -53,7 +53,7 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
     print("Desired matrix:\n", desired)
     print("Desired matrix sum:\n", desired.sum(axis=0))
 
-    with Graph(close=True) as graph:
+    with Graph(close_on_exit=True) as graph:
         Edges = Array("Edges", edges)
         EdgesModified = Array("Edges modified", edges_modified)
         if not linear:

@@ -41,7 +41,7 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
         a, b, c = wvals
         return (a**2 + (b**2) / e + (c / e) ** 2) ** 0.5 if all(e != 0) else 0
 
-    with Graph(close=True, debug=debug_graph) as graph:
+    with Graph(close_on_exit=True, debug=debug_graph) as graph:
         edges = Array("Edges", Edges_in)
         a, b, c = tuple(Array(name, [val], mark=name) for name, val in zip(parnames, wvals))
 
