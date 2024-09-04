@@ -43,12 +43,12 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nc
         EdgesOld >> metanode.inputs["edges_old"]
         EdgesNew >> metanode.inputs["edges_new"]
 
-        for iclone in range(nclones):
-            EdgesOld_i = Array(f"edges_old_{iclone+1}", edges_old)
-            EdgesOld_i >> metanode
+        # for iclone in range(nclones):
+        #     EdgesOld_i = Array(f"edges_old_{iclone+1}", edges_old)
+        #     EdgesOld_i >> metanode
 
-            for matrix in metanode._RebinMatrixList:
-                EdgesOld_i >> matrix
+        #     for matrix in metanode._RebinMatrixList:
+        #         EdgesOld_i >> matrix
 
         Y >> metanode()
         Y2 >> metanode()
