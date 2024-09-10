@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from numba import float64, int64, njit, void
+from numba import njit
 
 from dagflow.exception import InitializationError
 from dagflow.node import Node
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from dagflow.output import Output
 
 
-@njit(void(float64[:], float64[:], float64[:], float64, int64), cache=True)
+@njit(cache=True)
 def _monotonize_with_x(
     x: NDArray[double],
     y: NDArray[double],
@@ -52,7 +52,7 @@ def _monotonize_with_x(
         i -= 1
 
 
-@njit(void(float64[:], float64[:], float64, int64), cache=True)
+@njit(cache=True)
 def _monotonize_without_x(
     y: NDArray[double],
     result: NDArray[double],

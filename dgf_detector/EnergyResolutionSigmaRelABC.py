@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import sqrt
 from typing import TYPE_CHECKING
 
-from numba import float64, njit, void
+from numba import njit
 
 from dagflow.node import Node
 from dagflow.typefunctions import (
@@ -22,16 +22,7 @@ if TYPE_CHECKING:
     from dagflow.output import Output
 
 
-@njit(
-    void(
-        float64,
-        float64,
-        float64,
-        float64[:],
-        float64[:],
-    ),
-    cache=True,
-)
+@njit(cache=True)
 def _RelSigma(
     a: double,
     b: double,
@@ -39,10 +30,12 @@ def _RelSigma(
     Energy: NDArray[double],
     Sigma: NDArray[double],
 ):
-    a2 = a**2
-    b2 = b**2
+    a2 = a * a
+    b2 = b * b
+    c2 = c * c
     for i in range(len(Energy)):
-        Sigma[i] = sqrt(a2 + b2 / Energy[i] + (c / Energy[i]) ** 2)  # sqrt(a^2 + b^2/E + c^2/E^2)
+        e = Energy[i]
+        Sigma[i] = sqrt(a2 + b2 / e + c2 / (e * e))  # sqrt(a^2 + b^2/E + c^2/E^2)
 
 
 class EnergyResolutionSigmaRelABC(Node):
