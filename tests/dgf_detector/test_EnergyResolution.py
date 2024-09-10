@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from matplotlib import pyplot as plt
-from numpy import arange, digitize, fabs, geomspace, ndarray, zeros
+from numpy import allclose, arange, digitize, fabs, finfo, geomspace, ndarray, zeros
 from pytest import mark
 
 from dagflow.graph import Graph
@@ -43,7 +43,9 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         edges = Array("Edges", Edges_in)
-        a, b, c = tuple(Array(name, [val], mark=name) for name, val in zip(parnames, wvals))
+        a, b, c = tuple(
+            Array(name, [val], mark=name) for name, val in zip(parnames, wvals)
+        )
 
         ereses = []
         for i, energies in enumerate(Energy_set):
@@ -58,7 +60,9 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
 
     for i, eres in enumerate(ereses):
         centers_in = eres.outputs["Energy"].data
-        assert all(RelSigma(centers_in) == eres.inputs["RelSigma"].data)
+        rs_calc = eres.inputs["RelSigma"].data
+        rs_template = RelSigma(centers_in)
+        assert allclose(rs_template, rs_calc, atol=finfo("d").resolution, rtol=0)
         mat = eres.outputs["SmearMatrix"]
         mat_edges = mat.dd.axes_edges
         assert mat_edges[0] is mat_edges[1]

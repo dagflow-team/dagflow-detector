@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import exp, sqrt
 from typing import TYPE_CHECKING
 
-from numba import float64, njit, void
+from numba import njit
 from numpy import pi
 
 from dagflow.node import Node
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from dagflow.output import Output
 
 
-@njit(float64(float64, float64, float64), cache=True)
+@njit(cache=True)
 def __resolution(Etrue: double, Erec: double, RelSigma: double) -> double:
     _invtwopisqrt = 1.0 / sqrt(2.0 * pi)
     sigma = Etrue * RelSigma
@@ -30,14 +30,14 @@ def __resolution(Etrue: double, Erec: double, RelSigma: double) -> double:
     return exp(-0.5 * reldiff * reldiff) * _invtwopisqrt / sigma
 
 
-@njit(void(float64[:], float64[:], float64[:, :], float64), cache=True)
+@njit(cache=True)
 def _resolution(
     RelSigma: NDArray[double],
     Edges: NDArray[double],
     Result: NDArray[double],
     minEvents: float,
 ) -> None:
-    bincenter = lambda i: (Edges[i] + Edges[i + 1]) / 2
+    bincenter = lambda i: (Edges[i] + Edges[i + 1]) * 0.5
     nbins = len(RelSigma)
     for itrue in range(nbins):
         isRightEdge = False
