@@ -128,10 +128,10 @@ class EnergyResolution(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_EnergyResolutionMatrixBC = (names["EnergyResolutionMatrixBC"],)
-        key_EnergyResolutionSigmaRelABC = (names["EnergyResolutionSigmaRelABC"],)
-        key_BinCenter = (names["BinCenter"],)
-        key_Edges = (names["Edges"],)
+        key_EnergyResolutionMatrixBC = (names.get("EnergyResolutionMatrixBC", "EnergyResolutionMatrixBC"),)
+        key_EnergyResolutionSigmaRelABC = (names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),)
+        key_BinCenter = (names.get("BinCenter", "BinCenter"),)
+        key_Edges = (names.get("Edges", "Edges"),)
         if path:
             tpath = tuple(path.split("."))
             key_EnergyResolutionMatrixBC = tpath + key_EnergyResolutionMatrixBC
@@ -140,7 +140,7 @@ class EnergyResolution(MetaNode):
             key_Edges = tpath + key_Edges
 
         _EnergyResolutionSigmaRelABC = instance.add_EnergyResolutionSigmaRelABC(
-            names["EnergyResolutionSigmaRelABC"],
+            names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),
             labels.get("EnergyResolutionSigmaRelABC", {}),
         )
         nodes[key_EnergyResolutionSigmaRelABC] = _EnergyResolutionSigmaRelABC

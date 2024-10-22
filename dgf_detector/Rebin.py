@@ -97,15 +97,15 @@ class Rebin(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_VectorMatrixProduct = tuple(names["product"].split("."))
-        key_RebinMatrix = tuple(names["matrix"].split("."))
+        key_VectorMatrixProduct = tuple(names.get("product", "product").split("."))
+        key_RebinMatrix = tuple(names.get("matrix", "matrix").split("."))
         if path:
             tpath = tuple(path.split("."))
             key_VectorMatrixProduct = tpath + key_VectorMatrixProduct
             key_RebinMatrix = tpath + key_RebinMatrix
 
         _RebinMatrix = instance.add_RebinMatrix(
-            names["matrix"], label=labels.get("RebinMatrix", {}), **kwargs
+            names.get("matrix", "matrix"), label=labels.get("RebinMatrix", {}), **kwargs
         )
         nodes[key_RebinMatrix] = _RebinMatrix
         for iname, input in _RebinMatrix.inputs.iter_kw_items():
