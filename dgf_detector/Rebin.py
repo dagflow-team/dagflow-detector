@@ -25,7 +25,12 @@ class Rebin(MetaNode):
     _VectorMatrixProductList: list[Node]
 
     def __init__(
-        self, *, bare: bool = False, mode: RebinModesType = "numba", labels: Mapping = {}, **kwargs
+        self,
+        *,
+        bare: bool = False,
+        mode: RebinModesType = "numba",
+        labels: Mapping = {},
+        **kwargs,
     ):
         super().__init__()
         self._RebinMatrixList = []
@@ -36,7 +41,9 @@ class Rebin(MetaNode):
         self.add_RebinMatrix(
             name="RebinMatrix", mode=mode, label=labels.get("RebinMatrix", {}), **kwargs
         )
-        self.add_VectorMatrixProduct("VectorMatrixProduct", labels.get("VectorMatrixProduct", {}))
+        self.add_VectorMatrixProduct(
+            "VectorMatrixProduct", labels.get("VectorMatrixProduct", {})
+        )
         self._bind_outputs()
 
     def add_RebinMatrix(
@@ -69,7 +76,9 @@ class Rebin(MetaNode):
         return _VectorMatrixProduct
 
     def _bind_outputs(self) -> None:
-        if (l1 := len(self._VectorMatrixProductList)) != (l2 := len(self._RebinMatrixList)):
+        if (l1 := len(self._VectorMatrixProductList)) != (
+            l2 := len(self._RebinMatrixList)
+        ):
             raise ConnectionError(
                 "Cannot bind outputs! Nodes must be pairs of (VectorMatrixProduct, RebinMatrix), "
                 f"but current lengths are {l1}, {l2}!",
@@ -91,6 +100,7 @@ class Rebin(MetaNode):
         path: str | None = None,
         labels: Mapping = {},
         replicate_outputs: tuple[KeyLike, ...] = ((),),
+        verbose: bool = False,
         **kwargs,
     ) -> tuple[Rebin, NodeStorage]:
         storage = NodeStorage(default_containers=True)
@@ -127,5 +137,5 @@ class Rebin(MetaNode):
             outputs[name] = _VectorMatrixProduct.outputs["result"]
             _RebinMatrix.outputs["matrix"] >> _VectorMatrixProduct.inputs["matrix"]
 
-        NodeStorage.update_current(storage, strict=True)
+        NodeStorage.update_current(storage, strict=True, verbose=verbose)
         return instance, storage
