@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dagflow.node import Node
-from dagflow.typefunctions import (
+from dagflow.core.node import Node
+from dagflow.core.type_functions import (
     check_input_dimension,
     check_input_size,
     check_inputs_same_dtype,
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from dagflow.input import Input
-    from dagflow.output import Output
+    from dagflow.core.input import Input
+    from dagflow.core.output import Output
 
 
 class AxisDistortionMatrixLinearLegacy(Node):
@@ -50,7 +50,7 @@ class AxisDistortionMatrixLinearLegacy(Node):
         self._result = self._add_output("matrix")  # output: 0
         self._min_value_modified = min_value_modified
 
-        self._functions.update(
+        self._functions_dict.update(
             {
                 "python": self._fcn_python,
                 "numba": self._fcn_numba,

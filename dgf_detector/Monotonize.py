@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
-from dagflow.exception import InitializationError
-from dagflow.node import Node
-from dagflow.typefunctions import (
+from dagflow.core.exception import InitializationError
+from dagflow.core.node import Node
+from dagflow.core.type_functions import (
     check_input_dimension,
     check_inputs_same_shape,
     copy_from_input_to_output,
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from numpy import double
     from numpy.typing import NDArray
 
-    from dagflow.input import Input
-    from dagflow.output import Output
+    from dagflow.core.input import Input
+    from dagflow.core.output import Output
 
 
 @njit(cache=True)
@@ -136,7 +136,7 @@ class Monotonize(Node):
             self._x = self._add_input("x", positional=False)  # input: "x"
         self._y = self._add_input("y", positional=True)  # input: "y"
         self._result = self._add_output("result")  # output: 0
-        self._functions.update({"with_x": self._fcn_with_x, "without_x": self._fcn_without_x})
+        self._functions_dict.update({"with_x": self._fcn_with_x, "without_x": self._fcn_without_x})
 
     @property
     def gradient(self) -> float:
@@ -172,4 +172,4 @@ class Monotonize(Node):
         copy_from_input_to_output(self, "y", "result")
 
         self._index = int((self.inputs["y"].dd.shape[0] - 1) * self.index_fraction)
-        self.fcn = self._functions["with_x" if isGivenX else "without_x"]
+        self.function = self._functions_dict["with_x" if isGivenX else "without_x"]

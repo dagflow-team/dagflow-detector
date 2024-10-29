@@ -4,9 +4,10 @@ from matplotlib import pyplot as plt
 from numpy import allclose, arange, digitize, fabs, finfo, geomspace, ndarray, zeros
 from pytest import mark
 
-from dagflow.graph import Graph
-from dagflow.graphviz import savegraph
-from dagflow.lib.Array import Array
+from dagflow.core.graph import Graph
+from dagflow.lib.common import Array
+from dagflow.plot.graphviz import savegraph
+
 from dgf_detector.EnergyResolution import EnergyResolution
 
 parnames = ("a_nonuniform", "b_stat", "c_noise")
@@ -43,9 +44,7 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
         edges = Array("Edges", Edges_in)
-        a, b, c = tuple(
-            Array(name, [val], mark=name) for name, val in zip(parnames, wvals)
-        )
+        a, b, c = tuple(Array(name, [val], mark=name) for name, val in zip(parnames, wvals))
 
         ereses = []
         for i, energies in enumerate(Energy_set):

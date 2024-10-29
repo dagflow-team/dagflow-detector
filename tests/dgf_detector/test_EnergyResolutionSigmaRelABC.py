@@ -2,10 +2,11 @@
 
 from numpy import allclose, finfo, linspace
 
-from dagflow.graph import Graph
-from dagflow.graphviz import savegraph
-from dagflow.lib.Array import Array
-from dagflow.plot import plot_auto
+from dagflow.core.graph import Graph
+from dagflow.lib.common import Array
+from dagflow.plot.graphviz import savegraph
+from dagflow.plot.plot import plot_auto
+
 from dgf_detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
 
 

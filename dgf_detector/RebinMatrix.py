@@ -2,26 +2,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-from numba import njit
-from numpy import allclose, finfo, isclose
-
-from dagflow.exception import InitializationError
-from dagflow.inputhandler import MissingInputAdd
-from dagflow.node import Node
-from dagflow.typefunctions import (
+from dagflow.core.exception import InitializationError
+from dagflow.core.input_handler import MissingInputAdd
+from dagflow.core.node import Node
+from dagflow.core.type_functions import (
     AllPositionals,
     assign_output_edges,
     check_input_dimension,
     check_inputs_equivalence,
 )
+from numba import njit
+from numpy import allclose, finfo, isclose
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from dagflow.core.input import Input
+    from dagflow.core.output import Output
     from numpy.typing import NDArray
-
-    from dagflow.input import Input
-    from dagflow.output import Output
 
 
 RebinModes = {"python", "numba"}
@@ -76,7 +74,7 @@ class RebinMatrix(Node):
         self._edges_old = self._add_input("edges_old")  # input: 0
         self._edges_new = self._add_input("edges_new", positional=False)  # input: 1
         self._result = self._add_output("matrix")  # output: 0
-        self._functions.update(
+        self._functions_dict.update(
             {
                 "python": self._fcn_python,
                 "numba": self._fcn_numba,
@@ -143,7 +141,7 @@ class RebinMatrix(Node):
             self._edges_old.dd.size - 1,
         )
         self._result.dd.dtype = "d"
-        self.fcn = self._functions[self.mode]
+        self.function = self._functions_dict[self.mode]
         assign_output_edges((self._edges_new, self._edges_old), self._result)
 
         self._edges_old_clones = tuple(self.inputs[1:])

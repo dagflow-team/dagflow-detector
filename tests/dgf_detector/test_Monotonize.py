@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 """Check the Monotonize transformation"""
-from pytest import mark
-from numpy import allclose, fabs, finfo, linspace, log
 from matplotlib import pyplot as plt
+from numpy import allclose, fabs, finfo, linspace, log
+from pytest import mark
 
-from dagflow.graph import Graph
-from dagflow.graphviz import savegraph
-from dagflow.lib.Array import Array
+from dagflow.core.graph import Graph
+from dagflow.lib.common import Array
+from dagflow.plot.graphviz import savegraph
 
 from dgf_detector.Monotonize import Monotonize
 
