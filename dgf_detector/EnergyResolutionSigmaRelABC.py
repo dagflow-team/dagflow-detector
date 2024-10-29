@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 from numba import njit
 
-from dagflow.node import Node
-from dagflow.typefunctions import (
+from dagflow.core.node import Node
+from dagflow.core.type_functions import (
     AllPositionals,
     assign_output_axes_from_inputs,
     check_input_dimension,
@@ -18,8 +18,8 @@ if TYPE_CHECKING:
     from numpy import double
     from numpy.typing import NDArray
 
-    from dagflow.input import Input
-    from dagflow.output import Output
+    from dagflow.core.input import Input
+    from dagflow.core.output import Output
 
 
 @njit(cache=True)
@@ -77,7 +77,7 @@ class EnergyResolutionSigmaRelABC(Node):
         self._Energy = self._add_input("Energy")  # input: 0
         self._RelSigma = self._add_output("RelSigma")  # output: 0
 
-    def _fcn(self) -> None:
+    def _function(self) -> None:
         _RelSigma(
             self._a_nonuniform.data[0],
             self._b_stat.data[0],

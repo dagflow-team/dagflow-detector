@@ -2,17 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dagflow.exception import ConnectionError
-from dagflow.lib import BinCenter
-from dagflow.metanode import MetaNode
-from dagflow.storage import NodeStorage
+from dagflow.core.meta_node import MetaNode
+from dagflow.core.storage import NodeStorage
+from dagflow.core.exception import ConnectionError
+from dagflow.lib.axis import BinCenter
+
 from dgf_detector.EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
 from dgf_detector.EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from dagflow.node import Node
+    from dagflow.core.node import Node
     from multikeydict.typing import KeyLike
 
 
@@ -128,8 +129,12 @@ class EnergyResolution(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_EnergyResolutionMatrixBC = (names.get("EnergyResolutionMatrixBC", "EnergyResolutionMatrixBC"),)
-        key_EnergyResolutionSigmaRelABC = (names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),)
+        key_EnergyResolutionMatrixBC = (
+            names.get("EnergyResolutionMatrixBC", "EnergyResolutionMatrixBC"),
+        )
+        key_EnergyResolutionSigmaRelABC = (
+            names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),
+        )
         key_BinCenter = (names.get("BinCenter", "BinCenter"),)
         key_Edges = (names.get("Edges", "Edges"),)
         if path:

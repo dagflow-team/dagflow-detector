@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from numba import njit
 from numpy import pi
 
-from dagflow.node import Node
-from dagflow.typefunctions import (
+from dagflow.core.node import Node
+from dagflow.core.type_functions import (
     AllPositionals,
     check_input_dimension,
     check_input_size,
@@ -18,8 +18,8 @@ if TYPE_CHECKING:
     from numpy import double
     from numpy.typing import NDArray
 
-    from dagflow.input import Input
-    from dagflow.output import Output
+    from dagflow.core.input import Input
+    from dagflow.core.output import Output
 
 
 @njit(cache=True)
@@ -95,7 +95,7 @@ class EnergyResolutionMatrixBC(Node):
     def minEvents(self) -> float:
         return self._minEvents
 
-    def _fcn(self):
+    def _function(self):
         _resolution(
             self._RelSigma.data,
             self._Edges.data,

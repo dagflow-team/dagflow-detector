@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dagflow.node import Node
-from dagflow.typefunctions import (
+from dagflow.core.node import Node
+from dagflow.core.type_functions import (
     check_input_dimension,
     check_input_size,
     check_inputs_same_dtype,
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
     from numpy.typing import NDArray
 
-    from dagflow.input import Input
-    from dagflow.output import Output
+    from dagflow.core.input import Input
+    from dagflow.core.output import Output
 
 
 class AxisDistortionMatrixLinear(Node):
@@ -45,7 +45,7 @@ class AxisDistortionMatrixLinear(Node):
         self._edges_modified = self._add_input("EdgesModified", positional=False)
         self._result = self._add_output("matrix")  # output: 0
 
-        self._functions.update(
+        self._functions_dict.update(
             {
                 "python": self._fcn_python,
                 "numba": self._fcn_numba,
@@ -79,7 +79,7 @@ class AxisDistortionMatrixLinear(Node):
         self._result.dd.shape = (nedges - 1, nedges - 1)
         edges = self._edges_original.parent_output
         self._result.dd.axes_edges = (edges, edges)
-        self.fcn = self._functions["numba"]
+        self.function = self._functions_dict["numba"]
 
 
 def _axisdistortion_linear_python(

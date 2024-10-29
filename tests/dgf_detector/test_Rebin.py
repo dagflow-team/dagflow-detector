@@ -3,10 +3,10 @@ from numpy import allclose, finfo, linspace, matmul
 from numpy.typing import NDArray
 from pytest import mark, raises
 
-from dagflow.graph import Graph
-from dagflow.graphviz import savegraph
-from dagflow.lib import Array
-from dagflow.plot import closefig, plot_array_1d_hist, savefig
+from dagflow.core.graph import Graph
+from dagflow.lib.common import Array
+from dagflow.plot.graphviz import savegraph
+from dagflow.plot.plot import closefig, plot_array_1d_hist, savefig
 
 from dgf_detector.Rebin import Rebin
 from dgf_detector.RebinMatrix import RebinMatrix
@@ -32,7 +32,7 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nc
     edges_new = edges_old[start::stride]
     y_old_list = [linspace(3.0, 0.0, n - 1, dtype=dtype), linspace(2.0, 0.0, n - 1, dtype=dtype)]
 
-    atol = finfo(dtype).resolution*10
+    atol = finfo(dtype).resolution * 10
     with Graph(close_on_exit=True) as graph:
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)
@@ -66,7 +66,7 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nc
         y_res = matmul(mat, y_old)
         assert allclose(y_res, y_new, atol=atol, rtol=0)
         y_check = partial_sum(y_old[start:], stride)
-        assert allclose(y_check[:len(y_new)], y_new, atol=atol, rtol=0)
+        assert allclose(y_check[: len(y_new)], y_new, atol=atol, rtol=0)
 
     # plots
     plot_array_1d_hist(
@@ -121,12 +121,13 @@ def test_RebinMatrix_wrong_edges_new(edges_new, mode):
     with raises(Exception):
         mat.get_data()
 
+
 @mark.parametrize("mode", ("python", "numba"))
 def test_RebinMatrix_wrong_edges_new(mode):
     edges_old = linspace(0.0, 2.0, 21)
     edges_new = edges_old[0::2]
     edges_clone = edges_old.copy()
-    edges_clone[0]-=1
+    edges_clone[0] -= 1
     with Graph(close_on_exit=True):
         EdgesOld = Array("edges_old", edges_old)
         EdgesNew = Array("edges_new", edges_new)

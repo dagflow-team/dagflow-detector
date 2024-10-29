@@ -2,18 +2,20 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from dagflow.exception import ConnectionError
-from dagflow.lib import VectorMatrixProduct
-from dagflow.metanode import MetaNode
-from dagflow.storage import NodeStorage
+from dagflow.core.exception import ConnectionError
+from dagflow.core.meta_node import MetaNode
+from dagflow.core.storage import NodeStorage
+from dagflow.lib.linalg import VectorMatrixProduct
+
 from dgf_detector.RebinMatrix import RebinMatrix
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from dagflow.node import Node
-    from dgf_detector.RebinMatrix import RebinModesType
+    from dagflow.core.node import Node
     from multikeydict.typing import KeyLike
+
+    from dgf_detector.RebinMatrix import RebinModesType
 
 
 class Rebin(MetaNode):
