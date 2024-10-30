@@ -22,7 +22,10 @@ if TYPE_CHECKING:
 
 
 class AxisDistortionMatrixLinear(Node):
-    """For a given historam and distorted X axis compute the conversion matrix. Distortion is assumed to be linear."""
+    """For a given historam and distorted X axis compute the conversion matrix.
+
+    Distortion is assumed to be linear.
+    """
 
     __slots__ = (
         "_edges_original",
@@ -67,7 +70,7 @@ class AxisDistortionMatrixLinear(Node):
         )
 
     def _typefunc(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         names_edges = ("EdgesOriginal", "EdgesModified")
         check_input_dimension(self, names_edges, 1)
         check_inputs_same_dtype(self, names_edges)
@@ -135,10 +138,10 @@ def _axisdistortion_linear_python(
             if (idxy := idxy + 1) > nbinsy:
                 break
 
-        ##
-        ## Uncomment the following lines to see the debug output
-        ## (you need to also uncomment all the `left_axis` lines)
-        ##
+        #
+        # Uncomment the following lines to see the debug output
+        # (you need to also uncomment all the `left_axis` lines)
+        #
         # width_fine = righty_fine-lefty_fine
         # factor = width_fine/width_coarse
         # print(
@@ -163,6 +166,6 @@ def _axisdistortion_linear_python(
 
 from numba import njit
 
-_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray], None] = njit(cache=True)(
-    _axisdistortion_linear_python
-)
+_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray], None] = njit(
+    cache=True
+)(_axisdistortion_linear_python)
