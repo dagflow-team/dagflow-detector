@@ -22,8 +22,10 @@ if TYPE_CHECKING:
 
 
 class AxisDistortionMatrixLinearLegacy(Node):
-    """For a given historam and distorted X axis compute the conversion matrix. Distortion is assumed to be linear.
-    This is a legacy version of AxisDistortionMatrixLinear to be compatible with GNA implementation.
+    """For a given historam and distorted X axis compute the conversion matrix.
+
+    Distortion is assumed to be linear. This is a legacy version of
+    AxisDistortionMatrixLinear to be compatible with GNA implementation.
     """
 
     __slots__ = (
@@ -74,7 +76,7 @@ class AxisDistortionMatrixLinearLegacy(Node):
         )
 
     def _typefunc(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         names_edges = ("EdgesOriginal", "EdgesModified")
         check_input_dimension(self, names_edges, 1)
         check_inputs_same_dtype(self, names_edges)
@@ -86,11 +88,14 @@ class AxisDistortionMatrixLinearLegacy(Node):
         self._result.dd.shape = (nedges - 1, nedges - 1)
         edges = self._edges_original.parent_output
         self._result.dd.axes_edges = (edges, edges)
-        self.fcn = self._functions["numba"]
+        self.function = self._functions_dict["numba"]
 
 
 def _axisdistortion_linear_python(
-    edges_original: NDArray, edges_modified: NDArray, matrix: NDArray, min_value_modified: float
+    edges_original: NDArray,
+    edges_modified: NDArray,
+    matrix: NDArray,
+    min_value_modified: float,
 ):
     # in general, target edges may be different (fine than original), the code should handle it.
     edges_target = edges_original
@@ -173,6 +178,6 @@ def _axisdistortion_linear_python(
 
 from numba import njit
 
-_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, float], None] = njit(cache=True)(
-    _axisdistortion_linear_python
-)
+_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, float], None] = njit(
+    cache=True
+)(_axisdistortion_linear_python)

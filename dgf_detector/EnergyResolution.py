@@ -41,7 +41,9 @@ class EnergyResolution(MetaNode):
             label=labels.get("EnergyResolutionSigmaRelABC", {}),
         )
         self.add_BinCenter("BinCenter", labels.get("BinCenter", {}))
-        self.add_EnergyResolutionMatrixBC("EnergyResolution", labels.get("EnergyResolution", {}))
+        self.add_EnergyResolutionMatrixBC(
+            "EnergyResolution", labels.get("EnergyResolution", {})
+        )
         self._bind_outputs()
 
     def add_EnergyResolutionSigmaRelABC(
@@ -49,7 +51,9 @@ class EnergyResolution(MetaNode):
         name: str = "EnergyResolutionSigmaRelABC",
         label: Mapping = {},
     ) -> EnergyResolutionSigmaRelABC:
-        _EnergyResolutionSigmaRelABC = EnergyResolutionSigmaRelABC(name=name, label=label)
+        _EnergyResolutionSigmaRelABC = EnergyResolutionSigmaRelABC(
+            name=name, label=label
+        )
         self._EnergyResolutionSigmaRelABCList.append(_EnergyResolutionSigmaRelABC)
         self._add_node(
             _EnergyResolutionSigmaRelABC,
@@ -105,8 +109,14 @@ class EnergyResolution(MetaNode):
             self._EnergyResolutionSigmaRelABCList,
             self._EnergyResolutionMatrixBCList,
         ):
-            _BinCenter.outputs["Energy"] >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
-            _EnergyResolutionSigmaRelABC._RelSigma >> _EnergyResolutionMatrixBC.inputs["RelSigma"]
+            (
+                _BinCenter.outputs["Energy"]
+                >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
+            )
+            (
+                _EnergyResolutionSigmaRelABC._RelSigma
+                >> _EnergyResolutionMatrixBC.inputs["RelSigma"]
+            )
 
     # TODO: check this again; what should be in replicate_outputs argument: all the nodes or only main?
     @classmethod
@@ -122,6 +132,7 @@ class EnergyResolution(MetaNode):
         path: str | None = None,
         labels: Mapping = {},
         replicate_outputs: tuple[KeyLike, ...] = ((),),
+        verbose: bool = False,
     ) -> tuple[EnergyResolution, NodeStorage]:
         storage = NodeStorage(default_containers=True)
         nodes = storage("nodes")
@@ -151,7 +162,9 @@ class EnergyResolution(MetaNode):
         nodes[key_EnergyResolutionSigmaRelABC] = _EnergyResolutionSigmaRelABC
         for iname, input in _EnergyResolutionSigmaRelABC.inputs.iter_kw_items():
             inputs[key_EnergyResolutionSigmaRelABC + (iname,)] = input
-        outputs[key_EnergyResolutionSigmaRelABC] = _EnergyResolutionSigmaRelABC.outputs["RelSigma"]
+        outputs[key_EnergyResolutionSigmaRelABC] = _EnergyResolutionSigmaRelABC.outputs[
+            "RelSigma"
+        ]
 
         _BinCenter = instance.add_BinCenter("BinCenter", labels.get("BinCenter", {}))
         nodes[key_BinCenter] = _BinCenter
@@ -173,5 +186,5 @@ class EnergyResolution(MetaNode):
 
             out_relsigma >> eres.inputs["RelSigma"]
 
-        NodeStorage.update_current(storage, strict=True)
+        NodeStorage.update_current(storage, strict=True, verbose=verbose)
         return instance, storage
