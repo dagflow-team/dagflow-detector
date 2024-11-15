@@ -9,8 +9,8 @@ from numpy import pi
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
     AllPositionals,
-    check_input_dimension,
-    check_input_size,
+    check_dimension_of_inputs,
+    check_size_of_inputs,
     find_max_size_of_inputs,
 )
 
@@ -105,9 +105,9 @@ class EnergyResolutionMatrixBC(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
-        check_input_dimension(self, AllPositionals, 1)
+        check_dimension_of_inputs(self, AllPositionals, 1)
         size = find_max_size_of_inputs(self, "RelSigma")
-        check_input_size(self, "Edges", exact=size + 1)
+        check_size_of_inputs(self, "Edges", exact=size + 1)
 
         RelSigmadd = self._RelSigma.dd
         self._SmearMatrix.dd.shape = (RelSigmadd.shape[0], RelSigmadd.shape[0])

@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING
 
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
-    check_input_dimension,
-    check_input_size,
-    check_inputs_same_dtype,
-    check_inputs_same_shape,
-    copy_input_dtype_to_output,
-    eval_output_dtype,
+    check_dimension_of_inputs,
+    check_size_of_inputs,
+    check_inputs_have_same_dtype,
+    check_inputs_have_same_shape,
+    copy_dtype_from_inputs_to_outputs,
+    evaluate_dtype_of_outputs,
 )
 
 if TYPE_CHECKING:
@@ -72,12 +72,12 @@ class AxisDistortionMatrixLinear(Node):
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         names_edges = ("EdgesOriginal", "EdgesModified")
-        check_input_dimension(self, names_edges, 1)
-        check_inputs_same_dtype(self, names_edges)
-        (nedges,) = check_inputs_same_shape(self, names_edges)
-        check_input_size(self, "EdgesOriginal", min=1)
-        copy_input_dtype_to_output(self, "EdgesOriginal", "matrix")
-        eval_output_dtype(self, names_edges, "matrix")
+        check_dimension_of_inputs(self, names_edges, 1)
+        check_inputs_have_same_dtype(self, names_edges)
+        (nedges,) = check_inputs_have_same_shape(self, names_edges)
+        check_size_of_inputs(self, "EdgesOriginal", min=1)
+        copy_dtype_from_inputs_to_outputs(self, "EdgesOriginal", "matrix")
+        evaluate_dtype_of_outputs(self, names_edges, "matrix")
 
         self._result.dd.shape = (nedges - 1, nedges - 1)
         edges = self._edges_original.parent_output

@@ -8,10 +8,10 @@ from numba import njit
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
     AllPositionals,
-    assign_output_axes_from_inputs,
-    check_input_dimension,
-    check_input_shape,
-    copy_from_input_to_output,
+    assign_axes_from_inputs_to_outputs,
+    check_dimension_of_inputs,
+    check_shape_of_inputs,
+    copy_from_inputs_to_outputs,
 )
 
 if TYPE_CHECKING:
@@ -88,7 +88,7 @@ class EnergyResolutionSigmaRelABC(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
-        check_input_shape(self, ("a_nonuniform", "b_stat", "c_noise"), (1,))
-        check_input_dimension(self, AllPositionals, 1)
-        copy_from_input_to_output(self, "Energy", "RelSigma")
-        assign_output_axes_from_inputs(self, "Energy", "RelSigma", assign_meshes=True)
+        check_shape_of_inputs(self, ("a_nonuniform", "b_stat", "c_noise"), (1,))
+        check_dimension_of_inputs(self, AllPositionals, 1)
+        copy_from_inputs_to_outputs(self, "Energy", "RelSigma")
+        assign_axes_from_inputs_to_outputs(self, "Energy", "RelSigma", assign_meshes=True)
