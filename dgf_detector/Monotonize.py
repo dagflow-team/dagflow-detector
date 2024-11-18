@@ -7,9 +7,9 @@ from numba import njit
 from dagflow.core.exception import InitializationError
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
-    check_input_dimension,
-    check_inputs_same_shape,
-    copy_from_input_to_output,
+    check_dimension_of_inputs,
+    check_inputs_have_same_shape,
+    copy_from_inputs_to_outputs,
 )
 
 if TYPE_CHECKING:
@@ -167,9 +167,9 @@ class Monotonize(Node):
         isGivenX = self._x is not None
         inputsToCheck = ("x", "y") if isGivenX else "y"
 
-        check_input_dimension(self, inputsToCheck, 1)
-        check_inputs_same_shape(self, inputsToCheck)
-        copy_from_input_to_output(self, "y", "result")
+        check_dimension_of_inputs(self, inputsToCheck, 1)
+        check_inputs_have_same_shape(self, inputsToCheck)
+        copy_from_inputs_to_outputs(self, "y", "result")
 
         self._index = int((self.inputs["y"].dd.shape[0] - 1) * self.index_fraction)
         self.function = self._functions_dict["with_x" if isGivenX else "without_x"]

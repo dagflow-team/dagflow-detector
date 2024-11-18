@@ -7,8 +7,8 @@ from dagflow.core.input_handler import MissingInputAdd
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
     AllPositionals,
-    assign_output_edges,
-    check_input_dimension,
+    assign_edges_from_inputs_to_outputs,
+    check_dimension_of_inputs,
     check_inputs_equivalence,
 )
 from numba import njit
@@ -134,7 +134,7 @@ class RebinMatrix(Node):
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
-        check_input_dimension(self, ("edges_old", "edges_new"), 1)
+        check_dimension_of_inputs(self, ("edges_old", "edges_new"), 1)
         check_inputs_equivalence(self, AllPositionals, check_dtype=True, check_shape=True)
         self._result.dd.shape = (
             self._edges_new.dd.size - 1,
@@ -142,7 +142,7 @@ class RebinMatrix(Node):
         )
         self._result.dd.dtype = "d"
         self.function = self._functions_dict[self.mode]
-        assign_output_edges((self._edges_new, self._edges_old), self._result)
+        assign_edges_from_inputs_to_outputs((self._edges_new, self._edges_old), self._result)
 
         self._edges_old_clones = tuple(self.inputs[1:])
 
