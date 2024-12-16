@@ -96,7 +96,7 @@ class RebinMatrix(Node):
     def _fcn_python(self):
         edges_old = self._edges_old.data
         ret = _calc_rebin_matrix_python(
-            edges_old, self._edges_new.data, self._result.data, self.atol, self.rtol
+            edges_old, self._edges_new.data, self._result._data, self.atol, self.rtol
         )
         if ret[0] > 0:
             self.__raise_exception_at_wrong_edges(*ret)
@@ -109,7 +109,7 @@ class RebinMatrix(Node):
         ret = _calc_rebin_matrix_numba(
             self._edges_old.data,
             self._edges_new.data,
-            self._result.data,
+            self._result._data,
             self.atol,
             self.rtol,
         )

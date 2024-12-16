@@ -99,7 +99,7 @@ class EnergyResolutionMatrixBC(Node):
         _resolution(
             self._RelSigma.data,
             self._Edges.data,
-            self._SmearMatrix.data,
+            self._SmearMatrix._data,
             self.minEvents,
         )
 

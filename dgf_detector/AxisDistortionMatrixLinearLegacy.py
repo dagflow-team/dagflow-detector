@@ -63,7 +63,7 @@ class AxisDistortionMatrixLinearLegacy(Node):
         _axisdistortion_linear_python(
             self._edges_original.data,
             self._edges_modified.data,
-            self._result.data,
+            self._result._data,
             self._min_value_modified,
         )
 
@@ -71,7 +71,7 @@ class AxisDistortionMatrixLinearLegacy(Node):
         _axisdistortion_linear_numba(
             self._edges_original.data,
             self._edges_modified.data,
-            self._result.data,
+            self._result._data,
             self._min_value_modified,
         )
 

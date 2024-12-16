@@ -60,7 +60,7 @@ class AxisDistortionMatrix(Node):
             self._edges_original.data,
             self._edges_modified.data,
             self._edges_backward.data,
-            self._result.data,
+            self._result._data,
         )
 
     def _fcn_numba(self):
@@ -68,7 +68,7 @@ class AxisDistortionMatrix(Node):
             self._edges_original.data,
             self._edges_modified.data,
             self._edges_backward.data,
-            self._result.data,
+            self._result._data,
         )
 
     def _typefunc(self) -> None:
