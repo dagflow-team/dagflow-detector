@@ -59,14 +59,14 @@ class AxisDistortionMatrixLinear(Node):
         _axisdistortion_linear_python(
             self._edges_original.data,
             self._edges_modified.data,
-            self._result.data,
+            self._result._data,
         )
 
     def _fcn_numba(self):
         _axisdistortion_linear_numba(
             self._edges_original.data,
             self._edges_modified.data,
-            self._result.data,
+            self._result._data,
         )
 
     def _typefunc(self) -> None:

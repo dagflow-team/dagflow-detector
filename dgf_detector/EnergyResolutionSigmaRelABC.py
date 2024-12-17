@@ -83,7 +83,7 @@ class EnergyResolutionSigmaRelABC(Node):
             self._b_stat.data[0],
             self._c_noise.data[0],
             self._Energy.data,
-            self._RelSigma.data,
+            self._RelSigma._data,
         )
 
     def _typefunc(self) -> None:

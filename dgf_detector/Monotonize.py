@@ -151,15 +151,10 @@ class Monotonize(Node):
         return self._index
 
     def _fcn_with_x(self) -> None:
-        x = self._x.data
-        y = self._y.data
-        result = self._result.data
-        _monotonize_with_x(x, y, result, self.gradient, self.index)
+        _monotonize_with_x(self._x.data, self._y.data, self._result._data, self.gradient, self.index)
 
     def _fcn_without_x(self) -> None:
-        y = self._y.data
-        result = self._result.data
-        _monotonize_without_x(y, result, self.gradient, self.index)
+        _monotonize_without_x(self._y.data, self._result._data, self.gradient, self.index)
 
     def _typefunc(self) -> None:
         """A output takes this function to determine the dtype and shape"""
