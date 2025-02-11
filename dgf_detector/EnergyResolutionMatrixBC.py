@@ -103,7 +103,7 @@ class EnergyResolutionMatrixBC(Node):
             self.minEvents,
         )
 
-    def _typefunc(self) -> None:
+    def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape"""
         check_dimension_of_inputs(self, AllPositionals, 1)
         size = find_max_size_of_inputs(self, "RelSigma")

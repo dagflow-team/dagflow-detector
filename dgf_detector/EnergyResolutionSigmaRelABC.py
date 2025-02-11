@@ -86,7 +86,7 @@ class EnergyResolutionSigmaRelABC(Node):
             self._RelSigma._data,
         )
 
-    def _typefunc(self) -> None:
+    def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape"""
         check_shape_of_inputs(self, ("a_nonuniform", "b_stat", "c_noise"), (1,))
         check_dimension_of_inputs(self, AllPositionals, 1)

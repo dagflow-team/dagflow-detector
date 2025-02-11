@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
+from dagflow.core import input_strategy
 from dagflow.core.exception import InitializationError
-from dagflow.core.input_handler import MissingInputAdd
+from dagflow.core.input_strategy import AddNewInput
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
     AllPositionals,
@@ -58,7 +59,7 @@ class RebinMatrix(Node):
         super().__init__(
             *args,
             **kwargs,
-            missing_input_handler=MissingInputAdd(input_fmt="edges_old"),
+            input_strategy=AddNewInput(input_fmt="edges_old"),
             allowed_kw_inputs=("edges_new",),
         )
         self.labels.setdefaults(
@@ -76,8 +77,8 @@ class RebinMatrix(Node):
         self._result = self._add_output("matrix")  # output: 0
         self._functions_dict.update(
             {
-                "python": self._fcn_python,
-                "numba": self._fcn_numba,
+                "python": self._function_python,
+                "numba": self._function_numba,
             }
         )
 
@@ -93,7 +94,7 @@ class RebinMatrix(Node):
     def rtol(self) -> float:
         return self._rtol
 
-    def _fcn_python(self):
+    def _function_python(self):
         edges_old = self._edges_old.data
         ret = _calc_rebin_matrix_python(
             edges_old, self._edges_new.data, self._result._data, self.atol, self.rtol
@@ -104,7 +105,7 @@ class RebinMatrix(Node):
             if not allclose(edges_old, input.data, atol=self._atol, rtol=self._rtol):
                 raise RuntimeError(f"Clones of old edges are inconsistent (input {i})")
 
-    def _fcn_numba(self):
+    def _function_numba(self):
         edges_old = self._edges_old.data
         ret = _calc_rebin_matrix_numba(
             self._edges_old.data,
@@ -132,7 +133,7 @@ class RebinMatrix(Node):
             f"Inconsistent edges ({edges_kind}): old {iold} {edge_old}, new {inew} {edge_new}, diff {edge_old-edge_new:.2g}"
         )
 
-    def _typefunc(self) -> None:
+    def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape"""
         check_dimension_of_inputs(self, ("edges_old", "edges_new"), 1)
         check_inputs_equivalence(self, AllPositionals, check_dtype=True, check_shape=True)
