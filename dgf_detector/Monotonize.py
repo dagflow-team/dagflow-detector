@@ -136,7 +136,7 @@ class Monotonize(Node):
             self._x = self._add_input("x", positional=False)  # input: "x"
         self._y = self._add_input("y", positional=True)  # input: "y"
         self._result = self._add_output("result")  # output: 0
-        self._functions_dict.update({"with_x": self._fcn_with_x, "without_x": self._fcn_without_x})
+        self._functions_dict.update({"with_x": self._function_with_x, "without_x": self._function_without_x})
 
     @property
     def gradient(self) -> float:
@@ -150,13 +150,13 @@ class Monotonize(Node):
     def index(self) -> int:
         return self._index
 
-    def _fcn_with_x(self) -> None:
+    def _function_with_x(self) -> None:
         _monotonize_with_x(self._x.data, self._y.data, self._result._data, self.gradient, self.index)
 
-    def _fcn_without_x(self) -> None:
+    def _function_without_x(self) -> None:
         _monotonize_without_x(self._y.data, self._result._data, self.gradient, self.index)
 
-    def _typefunc(self) -> None:
+    def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape"""
         self._x = self.inputs.get("x")
         isGivenX = self._x is not None

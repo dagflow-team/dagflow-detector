@@ -54,12 +54,12 @@ class AxisDistortionMatrixLinearLegacy(Node):
 
         self._functions_dict.update(
             {
-                "python": self._fcn_python,
-                "numba": self._fcn_numba,
+                "python": self._function_python,
+                "numba": self._function_numba,
             }
         )
 
-    def _fcn_python(self):
+    def _function_python(self):
         _axisdistortion_linear_python(
             self._edges_original.data,
             self._edges_modified.data,
@@ -67,7 +67,7 @@ class AxisDistortionMatrixLinearLegacy(Node):
             self._min_value_modified,
         )
 
-    def _fcn_numba(self):
+    def _function_numba(self):
         _axisdistortion_linear_numba(
             self._edges_original.data,
             self._edges_modified.data,
@@ -75,7 +75,7 @@ class AxisDistortionMatrixLinearLegacy(Node):
             self._min_value_modified,
         )
 
-    def _typefunc(self) -> None:
+    def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
         names_edges = ("EdgesOriginal", "EdgesModified")
         check_dimension_of_inputs(self, names_edges, 1)
