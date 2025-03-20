@@ -6,9 +6,9 @@ from multikeydict.nestedmkdict import NestedMKDict
 
 
 def cross_check_refine_lsnl_data(
-    storage: NestedMKDict, *, edepname: str, nominalname: str, **kwargs
+    storage: NestedMKDict, *, xname: str, nominalname: str, **kwargs
 ) -> None:
-    xcoarse = storage[edepname]
+    xcoarse = storage[xname]
 
     refiner = RefineGraph(xcoarse, **kwargs)
 
@@ -19,7 +19,7 @@ def cross_check_refine_lsnl_data(
         nominal = storage[nominalname]
         storage[key] = refiner.process(ycoarse, nominal)
 
-    storage[edepname] = refiner.xfine
+    storage[xname] = refiner.xfine
 
 
 class RefineGraph:
