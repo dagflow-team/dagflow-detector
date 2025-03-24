@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from numpy import allclose
+
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
     check_dimension_of_inputs,
-    check_size_of_inputs,
     check_inputs_have_same_dtype,
     check_inputs_have_same_shape,
+    check_size_of_inputs,
     copy_dtype_from_inputs_to_outputs,
     evaluate_dtype_of_outputs,
 )
@@ -29,11 +31,13 @@ class AxisDistortionMatrixLinear(Node):
 
     __slots__ = (
         "_edges_original",
+        "_edges_target",
         "_edges_modified",
         "_result",
     )
 
     _edges_original: Input
+    _edges_target: Input
     _edges_modified: Input
     _result: Output
 
@@ -45,6 +49,7 @@ class AxisDistortionMatrixLinear(Node):
             }
         )
         self._edges_original = self._add_input("EdgesOriginal", positional=False)
+        self._edges_target = self._add_input("EdgesTarget", positional=False)
         self._edges_modified = self._add_input("EdgesModified", positional=False)
         self._result = self._add_output("matrix")  # output: 0
 
@@ -58,6 +63,7 @@ class AxisDistortionMatrixLinear(Node):
     def _function_python(self):
         _axisdistortion_linear_python(
             self._edges_original.data,
+            self._edges_target.data,
             self._edges_modified.data,
             self._result._data,
         )
@@ -65,13 +71,14 @@ class AxisDistortionMatrixLinear(Node):
     def _function_numba(self):
         _axisdistortion_linear_numba(
             self._edges_original.data,
+            self._edges_target.data,
             self._edges_modified.data,
             self._result._data,
         )
 
     def _type_function(self) -> None:
         """A output takes this function to determine the dtype and shape."""
-        names_edges = ("EdgesOriginal", "EdgesModified")
+        names_edges = ("EdgesOriginal", "EdgesTarget", "EdgesModified")
         check_dimension_of_inputs(self, names_edges, 1)
         check_inputs_have_same_dtype(self, names_edges)
         (nedges,) = check_inputs_have_same_shape(self, names_edges)
@@ -80,19 +87,21 @@ class AxisDistortionMatrixLinear(Node):
         evaluate_dtype_of_outputs(self, names_edges, "matrix")
 
         self._result.dd.shape = (nedges - 1, nedges - 1)
-        edges = self._edges_original.parent_output
-        self._result.dd.axes_edges = (edges, edges)
+        edges_original = self._edges_original.parent_output
+        edges_target = self._edges_target.parent_output
+        self._result.dd.axes_edges = (edges_target, edges_original)
         self.function = self._functions_dict["numba"]
 
 
 def _axisdistortion_linear_python(
     edges_original: NDArray,
+    edges_target: NDArray,
     edges_modified: NDArray,
     matrix: NDArray,
 ):
-    # in general, target edges may be different (fine than original), the code should handle it.
-    edges_target = edges_original
-    # min_original = edges_original[0]
+    # in general, target edges may be different (finer than original), the code should be able to handle it.
+    # but currently we just check that edges are the same.
+    assert edges_original is edges_target or allclose(edges_original, edges_target, atol=0.0, rtol=0.0)
     min_target = edges_target[0]
     nbinsx = edges_original.size - 1
     nbinsy = edges_target.size - 1
@@ -166,6 +175,6 @@ def _axisdistortion_linear_python(
 
 from numba import njit
 
-_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray], None] = njit(
+_axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(
     cache=True
 )(_axisdistortion_linear_python)
