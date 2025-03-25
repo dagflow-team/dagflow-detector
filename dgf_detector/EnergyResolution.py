@@ -127,6 +127,7 @@ class EnergyResolution(MetaNode):
             "EnergyResolutionSigmaRelABC": "sigma_rel",
             "EnergyResolutionMatrixBC": "matrix",
             "Edges": "e_edges",
+            "EdgesOut": "e_edges_out",
             "BinCenter": "e_bincenter",
         },
         path: str | None = None,
@@ -147,13 +148,14 @@ class EnergyResolution(MetaNode):
             names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),
         )
         key_BinCenter = (names.get("BinCenter", "BinCenter"),)
-        key_Edges = (names.get("Edges", "Edges"),)
-        if path:
-            tpath = tuple(path.split("."))
-            key_EnergyResolutionMatrixBC = tpath + key_EnergyResolutionMatrixBC
-            key_EnergyResolutionSigmaRelABC = tpath + key_EnergyResolutionSigmaRelABC
-            key_BinCenter = tpath + key_BinCenter
-            key_Edges = tpath + key_Edges
+        key_Edges0 = (names.get("Edges", "Edges"),)
+        key_EdgesOut0 = (names.get("EdgesOut", "EdgesOut"),)
+
+        tpath = tuple(path.split(".")) if path else ()
+        key_EnergyResolutionMatrixBC = tpath + key_EnergyResolutionMatrixBC
+        key_EnergyResolutionSigmaRelABC = tpath + key_EnergyResolutionSigmaRelABC
+        key_BinCenter = tpath + key_BinCenter
+        key_Edges = tpath + key_Edges0
 
         _EnergyResolutionSigmaRelABC = instance.add_EnergyResolutionSigmaRelABC(
             names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),
@@ -181,7 +183,8 @@ class EnergyResolution(MetaNode):
             name = ".".join(key_EnergyResolutionMatrixBC + key)
             eres = instance.add_EnergyResolutionMatrixBC(name, label_int)
             nodes[key_EnergyResolutionMatrixBC + key] = eres
-            inputs[key_EnergyResolutionMatrixBC + key] = eres.inputs["Edges"]
+            inputs[key_EnergyResolutionMatrixBC + key_Edges0 + key] = eres.inputs["Edges"]
+            inputs[key_EnergyResolutionMatrixBC + key_EdgesOut0 + key] = eres.inputs["EdgesOut"]
             outputs[key_EnergyResolutionMatrixBC + key] = eres.outputs[0]
 
             out_relsigma >> eres.inputs["RelSigma"]
