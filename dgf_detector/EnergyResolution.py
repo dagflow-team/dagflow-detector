@@ -86,7 +86,7 @@ class EnergyResolution(MetaNode):
         self._EnergyResolutionMatrixBCList.append(_EnergyResolutionMatrixBC)
         self._add_node(
             _EnergyResolutionMatrixBC,
-            kw_inputs=["RelSigma", "Edges"],
+            kw_inputs=["RelSigma", "Edges", "EdgesOut"],
             kw_outputs=["SmearMatrix"],
             merge_inputs=["Edges"],
             missing_inputs=True,

@@ -4,12 +4,13 @@ from math import exp, sqrt
 from typing import TYPE_CHECKING
 
 from numba import njit
-from numpy import pi
+from numpy import allclose, pi
 
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
     AllPositionals,
     check_dimension_of_inputs,
+    check_inputs_have_same_shape,
     check_size_of_inputs,
     find_max_size_of_inputs,
 )
@@ -34,9 +35,12 @@ def __resolution(Etrue: double, Erec: double, RelSigma: double) -> double:
 def _resolution(
     RelSigma: NDArray[double],
     Edges: NDArray[double],
+    EdgesOut: NDArray[double],
     Result: NDArray[double],
     minEvents: float,
 ) -> None:
+    assert Edges is EdgesOut or allclose(Edges, EdgesOut, atol=0.0, rtol=0.0)
+
     bincenter = lambda i: (Edges[i] + Edges[i + 1]) * 0.5
     nbins = len(RelSigma)
     for itrue in range(nbins):
@@ -58,20 +62,21 @@ def _resolution(
 
 
 class EnergyResolutionMatrixBC(Node):
-    """
-    Energy resolution
+    """Energy resolution.
 
     inputs:
-        `0` or `Edges`: Input bin Edges (N elements)
-        `1` or `RelSigma`: Relative Sigma value for each bin (N elements)
+        `0` or `RelSigma`: Relative Sigma value for each bin (N elements)
+        `Edges`: Input bin Edges (N elements)
+        `EdgesOut`: Output bin Edges (N elements), should be consistent with Edges.
 
     outputs:
         `0` or `SmearMatrix`: SmearMatrixing weights (NxN)
     """
 
-    __slots__ = ("_Edges", "_RelSigma", "_SmearMatrix", "_minEvents")
+    __slots__ = ("_Edges", "_EdgesOut", "_RelSigma", "_SmearMatrix", "_minEvents")
 
     _Edges: Input
+    _EdgesOut: Input
     _RelSigma: Input
     _SmearMatrix: Output
     _minEvents: float
@@ -87,8 +92,9 @@ class EnergyResolutionMatrixBC(Node):
             }
         )
         self._minEvents = minEvents
-        self._Edges = self._add_input("Edges")  # input: 0
-        self._RelSigma = self._add_input("RelSigma")  # input: 1
+        self._RelSigma = self._add_input("RelSigma")  # input: 0
+        self._Edges = self._add_input("Edges", positional=False)
+        self._EdgesOut = self._add_input("EdgesOut", positional=False)
         self._SmearMatrix = self._add_output("SmearMatrix")  # output: 0
 
     @property
@@ -99,18 +105,21 @@ class EnergyResolutionMatrixBC(Node):
         _resolution(
             self._RelSigma.data,
             self._Edges.data,
+            self._EdgesOut.data,
             self._SmearMatrix._data,
             self.minEvents,
         )
 
     def _type_function(self) -> None:
-        """A output takes this function to determine the dtype and shape"""
+        """A output takes this function to determine the dtype and shape."""
         check_dimension_of_inputs(self, AllPositionals, 1)
         size = find_max_size_of_inputs(self, "RelSigma")
         check_size_of_inputs(self, "Edges", exact=size + 1)
+        check_inputs_have_same_shape(self, ["Edges", "EdgesOut"])
 
         RelSigmadd = self._RelSigma.dd
         self._SmearMatrix.dd.shape = (RelSigmadd.shape[0], RelSigmadd.shape[0])
         self._SmearMatrix.dd.dtype = RelSigmadd.dtype
         edges = self._Edges._parent_output
-        self._SmearMatrix.dd.axes_edges = (edges, edges)
+        edges_out = self._EdgesOut._parent_output
+        self._SmearMatrix.dd.axes_edges = (edges_out, edges)
