@@ -101,6 +101,7 @@ class AxisDistortionMatrixLinearLegacy(Node):
 
 def _axisdistortion_linear_python(
     edges_original: NDArray,
+    edges_target: NDArray,
     edges_modified: NDArray,
     matrix: NDArray,
     min_value_modified: float,
