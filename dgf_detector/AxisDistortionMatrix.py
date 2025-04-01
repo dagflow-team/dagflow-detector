@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from numpy import allclose
+from numba import njit
 
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
@@ -109,7 +110,7 @@ def _axisdistortion_python(
     edges_modified: NDArray,
     edges_backwards: NDArray,
     matrix: NDArray,
-):
+) -> None:
     # in general, target edges may be different (finer than original), the code should be able to handle it.
     # but currently we just check that edges are the same.
     assert edges_original is edges_target or allclose(edges_original, edges_target, atol=0.0, rtol=0.0)
@@ -187,8 +188,6 @@ def _axisdistortion_python(
         leftx_fine, lefty_fine = rightx_fine, righty_fine
         # left_axis = right_axis
 
-
-from numba import njit
 
 _axisdistortion_numba: Callable[[NDArray, NDArray, NDArray, NDArray, NDArray], None] = (
     njit(cache=True)(_axisdistortion_python)

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from numpy import allclose
+from numba import njit
 
 from dagflow.core.node import Node
 from dagflow.core.type_functions import (
@@ -184,8 +185,6 @@ def _axisdistortion_linear_python(
         # leftx_fine = rightx_fine
         # left_axis = right_axis
 
-
-from numba import njit
 
 _axisdistortion_linear_numba: Callable[[NDArray, NDArray, NDArray, NDArray], None] = njit(
     cache=True

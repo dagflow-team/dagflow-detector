@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 @njit(cache=True)
-def _RelSigma(
+def _rel_sigma(
     a: double,
     b: double,
     c: double,
@@ -52,13 +52,13 @@ class EnergyResolutionSigmaRelABC(Node):
         `0` or `RelSigma`: relative RelSigma for each bin (N elements)
     """
 
-    __slots__ = ("_a_nonuniform", "_b_stat", "_c_noise", "_Energy", "_RelSigma")
+    __slots__ = ("_a_nonuniform", "_b_stat", "_c_noise", "_energy", "_rel_sigma")
 
     _a_nonuniform: Input
     _b_stat: Input
     _c_noise: Input
-    _Energy: Input
-    _RelSigma: Output
+    _energy: Input
+    _rel_sigma: Output
 
     def __init__(self, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
@@ -74,16 +74,16 @@ class EnergyResolutionSigmaRelABC(Node):
                 ("a_nonuniform", "b_stat", "c_noise"), positional=False
             )
         )
-        self._Energy = self._add_input("Energy")  # input: 0
-        self._RelSigma = self._add_output("RelSigma")  # output: 0
+        self._energy = self._add_input("Energy")  # input: 0
+        self._rel_sigma = self._add_output("RelSigma")  # output: 0
 
     def _function(self) -> None:
-        _RelSigma(
+        _rel_sigma(
             self._a_nonuniform.data[0],
             self._b_stat.data[0],
             self._c_noise.data[0],
-            self._Energy.data,
-            self._RelSigma._data,
+            self._energy.data,
+            self._rel_sigma._data,
         )
 
     def _type_function(self) -> None:

@@ -19,103 +19,103 @@ if TYPE_CHECKING:
 
 class EnergyResolution(MetaNode):
     __slots__ = (
-        "_EnergyResolutionMatrixBCList",
-        "_EnergyResolutionSigmaRelABCList",
-        "_BinCenterList",
+        "_energy_resolution_matrix_bc_list",
+        "_energy_resolution_sigma_rel_abc_list",
+        "_bin_center_list",
     )
 
-    _EnergyResolutionMatrixBCList: list[Node]
-    _EnergyResolutionSigmaRelABCList: list[Node]
-    _BinCenterList: list[Node]
+    _energy_resolution_matrix_bc_list: list[Node]
+    _energy_resolution_sigma_rel_abc_list: list[Node]
+    _bin_center_list: list[Node]
 
     def __init__(self, *, bare: bool = False, labels: Mapping = {}):
         super().__init__()
-        self._EnergyResolutionMatrixBCList = []
-        self._EnergyResolutionSigmaRelABCList = []
-        self._BinCenterList = []
+        self._energy_resolution_matrix_bc_list = []
+        self._energy_resolution_sigma_rel_abc_list = []
+        self._bin_center_list = []
         if bare:
             return
 
-        self.add_EnergyResolutionSigmaRelABC(
+        self.add_energy_resolution_sigma_rel_abc(
             name="EnergyResolutionSigmaRelABC",
             label=labels.get("EnergyResolutionSigmaRelABC", {}),
         )
-        self.add_BinCenter("BinCenter", labels.get("BinCenter", {}))
-        self.add_EnergyResolutionMatrixBC(
+        self.add_bin_center("BinCenter", labels.get("BinCenter", {}))
+        self.add_energy_resolution_matrix_bc(
             "EnergyResolution", labels.get("EnergyResolution", {})
         )
         self._bind_outputs()
 
-    def add_EnergyResolutionSigmaRelABC(
+    def add_energy_resolution_sigma_rel_abc(
         self,
         name: str = "EnergyResolutionSigmaRelABC",
         label: Mapping = {},
     ) -> EnergyResolutionSigmaRelABC:
-        _EnergyResolutionSigmaRelABC = EnergyResolutionSigmaRelABC(
+        _energy_resolution_sigma_rel_abc = EnergyResolutionSigmaRelABC(
             name=name, label=label
         )
-        self._EnergyResolutionSigmaRelABCList.append(_EnergyResolutionSigmaRelABC)
+        self._energy_resolution_sigma_rel_abc_list.append(_energy_resolution_sigma_rel_abc)
         self._add_node(
-            _EnergyResolutionSigmaRelABC,
+            _energy_resolution_sigma_rel_abc,
             kw_inputs=["Energy", "a_nonuniform", "b_stat", "c_noise"],
             kw_outputs=["RelSigma"],
             merge_inputs=["Energy"],
         )
-        return _EnergyResolutionSigmaRelABC
+        return _energy_resolution_sigma_rel_abc
 
-    def add_BinCenter(self, name: str = "BinCenter", label: Mapping = {}) -> BinCenter:
-        _BinCenter = BinCenter(name, label=label)
-        _BinCenter._add_pair("Edges", "Energy")
-        self._BinCenterList.append(_BinCenter)
+    def add_bin_center(self, name: str = "BinCenter", label: Mapping = {}) -> BinCenter:
+        _bin_center = BinCenter(name, label=label)
+        _bin_center._add_pair("Edges", "Energy")
+        self._bin_center_list.append(_bin_center)
         self._add_node(
-            _BinCenter,
+            _bin_center,
             kw_inputs=["Edges"],
             kw_outputs=["Energy"],
             merge_inputs=["Edges"],
             missing_inputs=True,
             also_missing_outputs=True,
         )
-        return _BinCenter
+        return _bin_center
 
-    def add_EnergyResolutionMatrixBC(
+    def add_energy_resolution_matrix_bc(
         self,
         name: str = "EnergyResolution",
         label: Mapping = {},
     ) -> EnergyResolutionMatrixBC:
-        _EnergyResolutionMatrixBC = EnergyResolutionMatrixBC(name, label=label)
-        self._EnergyResolutionMatrixBCList.append(_EnergyResolutionMatrixBC)
+        _energy_resolution_matrix_bc = EnergyResolutionMatrixBC(name, label=label)
+        self._energy_resolution_matrix_bc_list.append(_energy_resolution_matrix_bc)
         self._add_node(
-            _EnergyResolutionMatrixBC,
+            _energy_resolution_matrix_bc,
             kw_inputs=["RelSigma", "Edges", "EdgesOut"],
             kw_outputs=["SmearMatrix"],
             merge_inputs=["Edges"],
             missing_inputs=True,
             also_missing_outputs=True,
         )
-        return _EnergyResolutionMatrixBC
+        return _energy_resolution_matrix_bc
 
     def _bind_outputs(self) -> None:
         if not (
-            (l1 := len(self._BinCenterList))
-            == (l2 := len(self._EnergyResolutionMatrixBCList))
-            == (l3 := len(self._EnergyResolutionSigmaRelABCList))
+            (l1 := len(self._bin_center_list))
+            == (l2 := len(self._energy_resolution_matrix_bc_list))
+            == (l3 := len(self._energy_resolution_sigma_rel_abc_list))
         ):
             raise ConnectionError(
                 f"Cannot bind outputs! Nodes must be triplets of (BinCenter, EnergyResolutionMatrixBC, EnergyResolutionSigmaRelABC), but current lengths are {l1}, {l2}, {l3}!",
                 node=self,
             )
-        for _BinCenter, _EnergyResolutionSigmaRelABC, _EnergyResolutionMatrixBC in zip(
-            self._BinCenterList,
-            self._EnergyResolutionSigmaRelABCList,
-            self._EnergyResolutionMatrixBCList,
+        for _bin_center, _energy_resolution_sigma_rel_abc, _energy_resolution_matrix_bc in zip(
+            self._bin_center_list,
+            self._energy_resolution_sigma_rel_abc_list,
+            self._energy_resolution_matrix_bc_list,
         ):
             (
-                _BinCenter.outputs["Energy"]
-                >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
+                _bin_center.outputs["Energy"]
+                >> _energy_resolution_sigma_rel_abc.inputs["Energy"]
             )
             (
-                _EnergyResolutionSigmaRelABC._RelSigma
-                >> _EnergyResolutionMatrixBC.inputs["RelSigma"]
+                _energy_resolution_sigma_rel_abc._rel_sigma
+                >> _energy_resolution_matrix_bc.inputs["RelSigma"]
             )
 
     # TODO: check this again; what should be in replicate_outputs argument: all the nodes or only main?
@@ -141,51 +141,51 @@ class EnergyResolution(MetaNode):
         outputs = storage("outputs")
 
         instance = cls(bare=True)
-        key_EnergyResolutionMatrixBC = (
+        key_energy_resolution_matrix_bc = (
             names.get("EnergyResolutionMatrixBC", "EnergyResolutionMatrixBC"),
         )
-        key_EnergyResolutionSigmaRelABC = (
+        key_energy_resolution_sigma_rel_abc = (
             names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),
         )
-        key_BinCenter = (names.get("BinCenter", "BinCenter"),)
-        key_Edges0 = (names.get("Edges", "Edges"),)
-        key_EdgesOut0 = (names.get("EdgesOut", "EdgesOut"),)
+        key_bin_center = (names.get("BinCenter", "BinCenter"),)
+        key_edges0 = (names.get("Edges", "Edges"),)
+        key_edges_out0 = (names.get("EdgesOut", "EdgesOut"),)
 
         tpath = tuple(path.split(".")) if path else ()
-        key_EnergyResolutionMatrixBC = tpath + key_EnergyResolutionMatrixBC
-        key_EnergyResolutionSigmaRelABC = tpath + key_EnergyResolutionSigmaRelABC
-        key_BinCenter = tpath + key_BinCenter
-        key_Edges = tpath + key_Edges0
+        key_energy_resolution_matrix_bc = tpath + key_energy_resolution_matrix_bc
+        key_energy_resolution_sigma_rel_abc = tpath + key_energy_resolution_sigma_rel_abc
+        key_bin_center = tpath + key_bin_center
+        key_edges = tpath + key_edges0
 
-        _EnergyResolutionSigmaRelABC = instance.add_EnergyResolutionSigmaRelABC(
+        _energy_resolution_sigma_rel_abc = instance.add_energy_resolution_sigma_rel_abc(
             names.get("EnergyResolutionSigmaRelABC", "EnergyResolutionSigmaRelABC"),
             labels.get("EnergyResolutionSigmaRelABC", {}),
         )
-        nodes[key_EnergyResolutionSigmaRelABC] = _EnergyResolutionSigmaRelABC
-        for iname, input in _EnergyResolutionSigmaRelABC.inputs.iter_kw_items():
-            inputs[key_EnergyResolutionSigmaRelABC + (iname,)] = input
-        outputs[key_EnergyResolutionSigmaRelABC] = _EnergyResolutionSigmaRelABC.outputs[
+        nodes[key_energy_resolution_sigma_rel_abc] = _energy_resolution_sigma_rel_abc
+        for iname, input in _energy_resolution_sigma_rel_abc.inputs.iter_kw_items():
+            inputs[key_energy_resolution_sigma_rel_abc + (iname,)] = input
+        outputs[key_energy_resolution_sigma_rel_abc] = _energy_resolution_sigma_rel_abc.outputs[
             "RelSigma"
         ]
 
-        _BinCenter = instance.add_BinCenter("BinCenter", labels.get("BinCenter", {}))
-        nodes[key_BinCenter] = _BinCenter
-        inputs[key_Edges] = _BinCenter.inputs[0]
-        outputs[key_BinCenter] = (out_bincenter := _BinCenter.outputs[0])
+        _bin_center = instance.add_bin_center("BinCenter", labels.get("BinCenter", {}))
+        nodes[key_bin_center] = _bin_center
+        inputs[key_edges] = _bin_center.inputs[0]
+        outputs[key_bin_center] = (out_bincenter := _bin_center.outputs[0])
 
-        out_relsigma = _EnergyResolutionSigmaRelABC.outputs["RelSigma"]
-        out_bincenter >> _EnergyResolutionSigmaRelABC.inputs["Energy"]
+        out_relsigma = _energy_resolution_sigma_rel_abc.outputs["RelSigma"]
+        out_bincenter >> _energy_resolution_sigma_rel_abc.inputs["Energy"]
 
         label_int = labels.get("EnergyResolution", {})
         for key in replicate_outputs:
             if isinstance(key, str):
                 key = (key,)
-            name = ".".join(key_EnergyResolutionMatrixBC + key)
-            eres = instance.add_EnergyResolutionMatrixBC(name, label_int)
-            nodes[key_EnergyResolutionMatrixBC + key] = eres
-            inputs[key_EnergyResolutionMatrixBC + key_Edges0 + key] = eres.inputs["Edges"]
-            inputs[key_EnergyResolutionMatrixBC + key_EdgesOut0 + key] = eres.inputs["EdgesOut"]
-            outputs[key_EnergyResolutionMatrixBC + key] = eres.outputs[0]
+            name = ".".join(key_energy_resolution_matrix_bc + key)
+            eres = instance.add_energy_resolution_matrix_bc(name, label_int)
+            nodes[key_energy_resolution_matrix_bc + key] = eres
+            inputs[key_energy_resolution_matrix_bc + key_edges0 + key] = eres.inputs["Edges"]
+            inputs[key_energy_resolution_matrix_bc + key_edges_out0 + key] = eres.inputs["EdgesOut"]
+            outputs[key_energy_resolution_matrix_bc + key] = eres.outputs[0]
 
             out_relsigma >> eres.inputs["RelSigma"]
 
