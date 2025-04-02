@@ -25,7 +25,7 @@ def test_EnergyResolutionSigmaRelABC_v01(debug_graph, testname):
             inp >> sigma(name)
         energy >> sigma
 
-    res = sigma._RelSigma.data
+    res = sigma._rel_sigma.data
 
     show = False
     close = not show

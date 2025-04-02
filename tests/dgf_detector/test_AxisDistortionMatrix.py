@@ -66,6 +66,7 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
             mat = AxisDistortionMatrix("LSNL matrix")
 
         Edges >> mat.inputs["EdgesOriginal"]
+        Edges >> mat.inputs["EdgesTarget"]
         EdgesModified >> mat.inputs["EdgesModified"]
 
         if not linear:

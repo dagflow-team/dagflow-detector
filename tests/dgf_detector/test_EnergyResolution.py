@@ -54,6 +54,7 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
             for name, inp in zip(parnames, (a, b, c)):
                 inp >> eres.inputs[name]
             edges >> eres.inputs["Edges"]
+            edges >> eres.inputs["EdgesOut"]
             ereses.append(eres)
     savegraph(graph, f"output/{testname}.png")
 
