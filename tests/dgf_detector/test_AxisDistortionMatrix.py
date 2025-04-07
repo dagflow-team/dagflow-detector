@@ -55,10 +55,10 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
     print("Desired matrix sum:\n", desired.sum(axis=0))
 
     with Graph(close_on_exit=True) as graph:
-        Edges = Array("Edges", edges)
-        EdgesModified = Array("Edges modified", edges_modified)
+        Edges = Array("Edges", edges, mode="fill")
+        EdgesModified = Array("Edges modified", edges_modified, mode="fill")
         if not linear:
-            EdgesBackward = Array("Edges, projected backward", edges_backward)
+            EdgesBackward = Array("Edges, projected backward", edges_backward, mode="fill")
 
         if linear:
             mat = AxisDistortionMatrixLinear("LSNL matrix (linear)")

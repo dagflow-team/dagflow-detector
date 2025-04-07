@@ -43,13 +43,13 @@ def test_EnergyResolutionMatrixBC_v01(input_binning, debug_graph, Energy_set, te
         return (a**2 + (b**2) / e + (c / e) ** 2) ** 0.5 if all(e != 0) else 0
 
     with Graph(close_on_exit=True, debug=debug_graph) as graph:
-        edges = Array("Edges", Edges_in)
+        edges = Array("Edges", Edges_in, mode="fill")
         a, b, c = tuple(Array(name, [val], mark=name) for name, val in zip(parnames, wvals))
 
         ereses = []
         for i, energies in enumerate(Energy_set):
             phist_in = singularities(energies, Edges_in)
-            Array(f"Energy_{i}", phist_in, edges=[edges.outputs["array"]])
+            Array(f"Energy_{i}", phist_in, edges=[edges.outputs["array"]], mode="fill")
             eres = EnergyResolution()
             for name, inp in zip(parnames, (a, b, c)):
                 inp >> eres.inputs[name]
