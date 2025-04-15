@@ -34,17 +34,17 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nc
 
     atol = finfo(dtype).resolution * 10
     with Graph(close_on_exit=True) as graph:
-        EdgesOld = Array("edges_old", edges_old)
-        EdgesNew = Array("edges_new", edges_new)
-        Y = Array("Y", y_old_list[0])
-        Y2 = Array("Y2", y_old_list[1])
+        EdgesOld = Array("edges_old", edges_old, mode="fill")
+        EdgesNew = Array("edges_new", edges_new, mode="fill")
+        Y = Array("Y", y_old_list[0], mode="fill")
+        Y2 = Array("Y2", y_old_list[1], mode="fill")
         metanode = Rebin(mode=mode, atol=atol)
 
         EdgesOld >> metanode.inputs["edges_old"]
         EdgesNew >> metanode.inputs["edges_new"]
 
         # for iclone in range(nclones):
-        #     EdgesOld_i = Array(f"edges_old_{iclone+1}", edges_old)
+        #     EdgesOld_i = Array(f"edges_old_{iclone+1}", edges_old, mode="fill")
         #     EdgesOld_i >> metanode
 
         #     for matrix in metanode._RebinMatrixList:
@@ -113,8 +113,8 @@ def test_Rebin(testname: str, start: int, stride: int, dtype: str, mode: str, nc
 def test_RebinMatrix_wrong_edges_new(edges_new, mode):
     edges_old = linspace(0.0, 2.0, 21)
     with Graph(close_on_exit=True):
-        EdgesOld = Array("edges_old", edges_old)
-        EdgesNew = Array("edges_new", edges_new)
+        EdgesOld = Array("edges_old", edges_old, mode="fill")
+        EdgesNew = Array("edges_new", edges_new, mode="fill")
         mat = RebinMatrix("Rebin Matrix", mode=mode)
         EdgesOld >> mat("edges_old")
         EdgesNew >> mat("edges_new")
@@ -129,9 +129,9 @@ def test_RebinMatrix_wrong_edges_new(mode):
     edges_clone = edges_old.copy()
     edges_clone[0] -= 1
     with Graph(close_on_exit=True):
-        EdgesOld = Array("edges_old", edges_old)
-        EdgesNew = Array("edges_new", edges_new)
-        EdgesClone = Array("edges_clone", edges_clone)
+        EdgesOld = Array("edges_old", edges_old, mode="fill")
+        EdgesNew = Array("edges_new", edges_new, mode="fill")
+        EdgesClone = Array("edges_clone", edges_clone, mode="fill")
         mat = RebinMatrix("Rebin Matrix", mode=mode)
         EdgesOld >> mat("edges_old")
         EdgesNew >> mat("edges_new")
