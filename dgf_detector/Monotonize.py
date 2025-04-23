@@ -30,6 +30,7 @@ def _monotonize_with_x(
 ) -> None:
     # forward loop
     i = index
+    result[i] = y[i]
     direction = 1 if y[i + 1] > y[i] else -1
     while i < len(y) - 1:
         direction_current = 1 if y[i + 1] > result[i] else -1
@@ -42,7 +43,7 @@ def _monotonize_with_x(
     # backward loop
     if index == 0:
         return
-    i = index + 2
+    i = index + 1
     while i > 0:
         direction_current = 1 if result[i] > y[i - 1] else -1
         if direction == direction_current:
@@ -61,6 +62,7 @@ def _monotonize_without_x(
 ) -> None:
     # forward loop
     i = index
+    result[i] = y[i]
     direction = 1 if y[i + 1] > y[i] else -1
     while i < len(y) - 1:
         direction_current = 1 if y[i + 1] > result[i] else -1
@@ -73,7 +75,7 @@ def _monotonize_without_x(
     # backward loop
     if index == 0:
         return
-    i = index + 2
+    i = index + 1
     while i > 0:
         direction_current = 1 if result[i] > y[i - 1] else -1
         if direction == direction_current:

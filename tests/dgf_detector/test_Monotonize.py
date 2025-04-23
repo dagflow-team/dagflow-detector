@@ -1,29 +1,34 @@
 #!/usr/bin/env python
 
-"""Check the Monotonize transformation"""
+"""Check the Monotonize transformation."""
+from typing import Literal
+
 from matplotlib import pyplot as plt
-from numpy import allclose, fabs, finfo, linspace, log
+from numpy import allclose, fabs, finfo, linspace, log, median
 from pytest import mark
 
 from dagflow.core.graph import Graph
 from dagflow.lib.common import Array
 from dagflow.plot.graphviz import savegraph
-
 from dgf_detector.Monotonize import Monotonize
 
 
 @mark.parametrize("direction", [+1, -1])
 @mark.parametrize("gradient", [0, 0.5])
 @mark.parametrize("start", [0, 0.5])
+@mark.parametrize("positive", [True, False])
 def test_monotonize(
-    direction,
-    gradient,
-    start,
+    direction: Literal[-1, +1],
+    gradient: float | int,
+    start: float | int,
+    positive: bool,
     debug_graph,
     testname,
 ):
     x = linspace(0.0, 10, 101)[1:]
     y = log(x)
+    if not positive:
+        y -= y.max()
     mask = x < 1.0
     y[mask] = (x[mask] - 1.0) ** 2
 
@@ -67,7 +72,9 @@ def test_monotonize(
     assert (ym == ym2).all()
 
     fig = plt.figure()
-    ax = plt.subplot(111, xlabel="x", ylabel="y", title=f"Grad {gradient}, start {start}")
+    ax = plt.subplot(
+        111, xlabel="x", ylabel="y", title=f"Grad {gradient}, start {start}"
+    )
     ax.grid()
     ax.plot(x, y, "+", label="input")
     ax.plot(x, ym, "x", label="monotonize 1")
