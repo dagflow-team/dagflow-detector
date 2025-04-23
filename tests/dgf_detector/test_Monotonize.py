@@ -4,7 +4,7 @@
 from typing import Literal
 
 from matplotlib import pyplot as plt
-from numpy import allclose, fabs, finfo, linspace, log, median
+from numpy import allclose, fabs, finfo, linspace, log
 from pytest import mark
 
 from dagflow.core.graph import Graph
