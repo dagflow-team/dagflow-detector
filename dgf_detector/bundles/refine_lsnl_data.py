@@ -31,6 +31,7 @@ class RefineGraph:
         "refine_times",
         "newmin",
         "newmax",
+        "savgol_filter_smoothen",
     )
     xcoarse: NDArray
     xfine_bound: NDArray
@@ -39,6 +40,7 @@ class RefineGraph:
     refine_times: int
     newmin: float
     newmax: float
+    savgol_filter_smoothen: tuple[int, int] | None
 
     def __init__(
         self,
@@ -47,15 +49,23 @@ class RefineGraph:
         refine_times: int,
         newmin: float,
         newmax: float,
+        savgol_filter_smoothen: tuple[int, int] | None = None,
     ):
         self.xcoarse = xcoarse
         self.refine_times = refine_times
         self.newmin = newmin
         self.newmax = newmax
+        self.savgol_filter_smoothen = savgol_filter_smoothen
 
         self._process_x()
 
     def make_finer_x(self) -> None:
+        assert self.refine_times % 1 == 0 and self.refine_times > 0
+
+        if self.refine_times == 1:
+            self.xfine_bound = self.xcoarse.copy()
+            return
+
         shape_fine = (self.xcoarse.size - 1) * self.refine_times + 1
         self.xfine_bound = linspace(self.xcoarse[0], self.xcoarse[-1], shape_fine)
 
@@ -84,18 +94,33 @@ class RefineGraph:
         self.make_finer_x()
         self.make_extended_x()
 
-    def process(self, y: NDArray, nominal: NDArray) -> NDArray:
+    def process(
+        self,
+        y: NDArray,
+        nominal: NDArray,
+    ) -> NDArray:
         skip_diff = y is nominal
         yabs = self._method_reltoabs(y)
         yfine = self._method_interpolate(yabs)
         yunbound = self._method_extrapolate(yfine)
 
-        return yunbound if skip_diff else self._method_diff(nominal, yunbound)
+        if skip_diff:
+            return yunbound
+
+        ydiff = self._method_diff(nominal, yunbound)
+        if self.savgol_filter_smoothen is None:
+            return ydiff
+
+        ydiff_smooth = self._method_filter(ydiff)
+        return ydiff_smooth
 
     def _method_reltoabs(self, yrel: NDArray) -> NDArray:
         return yrel * self.xcoarse
 
     def _method_interpolate(self, ycoarse) -> NDArray:
+        if self.refine_times == 1:
+            return ycoarse.copy()
+
         fcn = interp1d(
             self.xcoarse,
             ycoarse,
@@ -125,3 +150,12 @@ class RefineGraph:
 
     def _method_diff(self, nominal: NDArray, y: NDArray) -> NDArray:
         return nominal if nominal is y else y - nominal
+
+    def _method_filter(self, y: NDArray) -> NDArray:
+        if self.savgol_filter_smoothen is None:
+            return y.copy()
+
+        from scipy.signal import savgol_filter
+
+        npoints_coarse, deg = self.savgol_filter_smoothen
+        return savgol_filter(y, npoints_coarse * self.refine_times, deg)
