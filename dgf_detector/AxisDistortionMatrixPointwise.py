@@ -229,11 +229,19 @@ def _axisdistortion_pointwise_python(
                 passed_any = True
 
         # Uncomment the following lines to see the debug output
-        # (you need to also uncomment all the `left_axis` lines)
-        #
         print(
-                f"seg {idx:04d} {x0:.2g},{x1:.2g}→{y0:.2g},{y1:.2g}"
-                "  "
+                f"seg {idx:04d} x {x0:0.2g},{x1:0.2g} → y {y0:0.2g},{y1:0.2g}"
+                " "
+                f"ex {bin_idx_x:02d} {left_x:0.2g}→{right_x:0.2g}"
+                " "
+                f"ey {bin_idx_y:02d} {left_y:0.2g}→{right_y:0.2g}"
+                " "
+                f"p {passed_any:d} "
+                f"X{passed_x:d}{passed_x_first:d} "
+                f"Y{passed_y_right:d}{passed_y_right_first:d} "
+                f"y{passed_y_left:d}{passed_y_left_first:d}"
+                " "
+                f"f {left:0.2g}→{right:0.2g}"
         )
 
         if passed_any:
