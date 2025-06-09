@@ -107,7 +107,6 @@ class AxisDistortionMatrixPointwise(Node):
         edges_target = self._edges_target.parent_output
         self._result.dd.axes_edges = (edges_target, edges_original)
         self.function = self._functions_dict["numba"]
-        self.function = self._functions_dict["python"]
 
 
 @njit
@@ -131,25 +130,28 @@ def _axisdistortion_pointwise_python(
     assert edges_original is edges_target or allclose(
         edges_original, edges_target, atol=0.0, rtol=0.0
     )
-    min_target = edges_target[0]
+    matrix[:, :] = 0.0
+
+    if (
+        distortion_original[0] >= edges_original[-1]
+        or distortion_original[-1] < edges_original[0]
+    ):
+        return
+
     n_bins_x = edges_original.size - 1
     n_bins_y = edges_target.size - 1
-
-    matrix[:, :] = 0.0
 
     n_points = distortion_original.size
     idx_last_point = n_points - 1
     last_x = distortion_original[idx_last_point]
     last_y = distortion_target[idx_last_point]
 
-    print(
-        f"np {distortion_original.size} nex {edges_original.size} ney {edges_target.size}"
-        " "
-        f"nbx {edges_original.size-1} nby {edges_target.size-1}"
-    )
-
-    large_positive_number = 1e100
-    large_negative_number = -large_positive_number
+    # print(
+    #     f"np {distortion_original.size} nex {edges_original.size} ney {edges_target.size}"
+    #     " "
+    #     f"nbx {edges_original.size-1} nby {edges_target.size-1}"
+    # )
+    large_negative_number = -1e30
 
     idx = -1
     x0, x1 = large_negative_number, large_negative_number
@@ -163,36 +165,22 @@ def _axisdistortion_pointwise_python(
     right_x = edges_original[bin_idx_x + 1]
     width_x_full = right_x - left_x
 
-    # left_y: float = edges_original[bin_idx_y]
-    left_y = large_negative_number
-    right_y: float = edges_target[bin_idx_y + 1]
+    # bottom_y: float = edges_original[bin_idx_y]
+    bottom_y = large_negative_number
+    top_y: float = edges_target[bin_idx_y + 1]
     left, right = large_negative_number, large_negative_number
-
-    # Find the starting point
-    # while idx < idx_last_point:
-    #     if x1 > left_x:
-    #         left = left_x
-    #         break
-    #     elif y1 > left_y:
-    #         left = _project_y_to_x_linear(left_y, x0, x1, y0, y1)
-    #         break
-
-    #     idx += 1
-    #     x0 = distortion_original[idx]
-    #     y0 = distortion_target[idx]
-    #     x1 = distortion_original[idx + 1]
-    #     y1 = distortion_target[idx + 1]
-
-    #     assert x1 > x0, "Allow only ascending x"
 
     # Advance:
     # - segments of the distortion curve: forward
     # - X bins: forward
     # - Y bins: forward/backward
-    while True:
-        passed_x = x1 > right_x
-        passed_y_right = y1 > right_y
-        passed_y_left = (y1 < left_y) & (y1 > large_negative_number)
+    did_advance = True
+    while did_advance:
+        did_advance = False
+
+        passed_x = x1 >= right_x
+        passed_y_right = y1 >= top_y
+        passed_y_left = (y1 <= bottom_y) & (y1 > large_negative_number)
 
         assert not (
             passed_y_left & passed_y_right
@@ -210,7 +198,7 @@ def _axisdistortion_pointwise_python(
             passed_x_first = True
 
         if passed_y_right:
-            right_x_from_y_right = _project_y_to_x_linear(right_y, x0, x1, y0, y1)
+            right_x_from_y_right = _project_y_to_x_linear(top_y, x0, x1, y0, y1)
             if passed_any:
                 if right_x_from_y_right == right:
                     passed_y_right_first = True
@@ -225,7 +213,7 @@ def _axisdistortion_pointwise_python(
                 right = right_x_from_y_right
                 passed_any = True
         elif passed_y_left:
-            right_x_from_y_left = _project_y_to_x_linear(left_y, x0, x1, y0, y1)
+            right_x_from_y_left = _project_y_to_x_linear(bottom_y, x0, x1, y0, y1)
             if passed_any:
                 if right_x_from_y_left == right:
                     passed_y_left_first = True
@@ -240,40 +228,40 @@ def _axisdistortion_pointwise_python(
                 right = right_x_from_y_left
                 passed_any = True
 
-        # Uncomment the following lines to see the debug output
-        second_edge_found = bin_idx_x>=0 and bin_idx_y>=0
-        if second_edge_found:
-            debug_dx_fine = right-left
-            debug_dx_coarse = right_x-left_x
-            debug_weight = debug_dx_fine/debug_dx_coarse
-        else:
-            debug_dx_fine = -1
-            debug_dx_coarse = -1
-            debug_weight = -1
-        print(
-            f"{second_edge_found and 'n' or 'i'} "
-            f"seg {idx: 4d}: x {x0:0.2g},{x1:0.2g} → y {y0:0.2g},{y1:0.2g}"
-            " "
-            f"ex {bin_idx_x: 2d}: {left_x:0.2g}→{right_x:0.2g}"
-            " "
-            f"ey {bin_idx_y: 2d}: {left_y:0.2g}→{right_y:0.2g}"
-            " "
-            f"p{passed_any:d} "
-            f"X{passed_x:d}{passed_x_first:d} "
-            f"Y{passed_y_right:d}{passed_y_right_first:d} "
-            f"y{passed_y_left:d}{passed_y_left_first:d}"
-            " "
-            f"fn {left:0.2g}→{right:0.2g}={debug_dx_fine:0.2g}"
-            " "
-            f"cs {left_x:0.2g}→{right_x:0.2g}={debug_dx_coarse:0.2g}"
-            " "
-            f"w {debug_weight}"
-        )
+        # # Uncomment the following lines to see the debug output
+        # second_edge_found = bin_idx_x >= 0 and bin_idx_y >= 0
+        # if second_edge_found:
+        #     debug_dx_fine = right - left
+        #     debug_dx_coarse = right_x - left_x
+        #     debug_weight = debug_dx_fine / debug_dx_coarse
+        # else:
+        #     debug_dx_fine = -1
+        #     debug_dx_coarse = -1
+        #     debug_weight = -1
+        # print(
+        #     f"{second_edge_found and 'n' or 'i'} "
+        #     f"seg {idx: 4d}: x {x0:0.2g},{x1:0.2g} → y {y0:0.2g},{y1:0.2g}"
+        #     " "
+        #     f"ex {bin_idx_x: 2d}: {left_x:0.2g}→{right_x:0.2g}"
+        #     " "
+        #     f"ey {bin_idx_y: 2d}: {bottom_y:0.2g}→{top_y:0.2g}"
+        #     " "
+        #     f"p{passed_any:d} "
+        #     f"X{passed_x:d}{passed_x_first:d} "
+        #     f"Y{passed_y_right:d}{passed_y_right_first:d} "
+        #     f"y{passed_y_left:d}{passed_y_left_first:d}"
+        #     " "
+        #     f"fn {left:0.2g}→{right:0.2g}={debug_dx_fine:0.2g}"
+        #     " "
+        #     f"cs {left_x:0.2g}→{right_x:0.2g}={debug_dx_coarse:0.2g}"
+        #     " "
+        #     f"w {debug_weight}"
+        # )
 
         if passed_any:
-            if bin_idx_x>=0 and bin_idx_y>=0:
+            if bin_idx_x >= 0 and bin_idx_y >= 0:
                 width_x_partial = fabs(right - left)
-                if width_x_partial!=0:
+                if width_x_partial != 0:
                     element = width_x_partial / width_x_full
                     matrix[bin_idx_y, bin_idx_x] = element
 
@@ -282,12 +270,13 @@ def _axisdistortion_pointwise_python(
             if passed_x_first:
                 bin_idx_x += 1
                 if bin_idx_x >= n_bins_x:
-                    print("break idx x")
+                    # print("break idx x")
                     break
 
                 left_x = edges_original[bin_idx_x]
+                did_advance = True
                 if left_x > last_x:
-                    print("break x")
+                    # print("break x")
                     break
 
                 right_x = edges_original[bin_idx_x + 1]
@@ -295,42 +284,45 @@ def _axisdistortion_pointwise_python(
 
             if passed_y_right_first:
                 if bin_idx_y == n_bins_y - 1:
-                    if bin_idx_x>=n_bins_x-1:
+                    if bin_idx_x >= n_bins_x - 1:
                         break
                     else:
                         continue
 
                 bin_idx_y += 1
-                left_y = edges_target[bin_idx_y]
-                if left_y > last_y:
-                    print("break Y")
+                bottom_y = edges_target[bin_idx_y]
+                did_advance = True
+                if bottom_y > last_y:
+                    # print("break Y")
                     break
-                right_y = edges_target[bin_idx_y + 1]
+                top_y = edges_target[bin_idx_y + 1]
             elif passed_y_left_first:
                 if bin_idx_y == 0:
-                    if bin_idx_x>=n_bins_x-1:
+                    if bin_idx_x >= n_bins_x - 1:
                         break
                     else:
                         continue
 
                 bin_idx_y -= 1
-                left_y = edges_target[bin_idx_y]
-                if left_y > last_y:
-                    print("break y")
+                bottom_y = edges_target[bin_idx_y]
+                did_advance = True
+                if bottom_y > last_y:
+                    # print("break y")
                     break
-                right_y = edges_target[bin_idx_y + 1]
+                top_y = edges_target[bin_idx_y + 1]
 
             continue
 
         idx += 1
         if idx >= idx_last_point:
-            print("break idx")
+            # print("break idx")
             break
 
         x0 = distortion_original[idx]
         y0 = distortion_target[idx]
         x1 = distortion_original[idx + 1]
         y1 = distortion_target[idx + 1]
+        did_advance = True
         assert x1 > x0, "Allow only ascending x"
 
 

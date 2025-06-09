@@ -35,9 +35,7 @@ from dgf_detector.AxisDistortionMatrixPointwise import AxisDistortionMatrixPoint
 )
 @mark.parametrize(
     "mode",
-    ("pointwise",), # TODO
-    # ("exact", "linear"),
-    # ("exact", "linear", "pointwise"),
+    ("exact", "linear", "pointwise"),
 )
 def test_AxisDistortionMatrix(
     setname: str,
@@ -98,7 +96,7 @@ def test_AxisDistortionMatrix(
     print("Obtained matrix:\n", res)
     print("Obtained matrix sum:\n", ressum)
 
-    if mode=="pointwise":
+    if mode == "pointwise":
         atol = finfo(dtype).resolution * 0.5
     else:
         atol = 0 if dtype == "d" else finfo(dtype).resolution * 0.5
