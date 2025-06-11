@@ -39,8 +39,9 @@ def test_AxisDistortionMatrixPointwise(
 ):
     nbins = 10
     edges = linspace(0, nbins, nbins + 1, dtype=dtype)
-    x_fine = linspace(edges[0], edges[-1], nsegments + 1, dtype=dtype) + xoffset
+    x_fine = linspace(edges[0], edges[-1], nsegments + 1, dtype=dtype)
     y_fine = x_fine + yoffset
+    x_fine = x_fine + xoffset
     if inverse:
         y_fine[:] = y_fine[::-1]
 
@@ -65,7 +66,7 @@ def test_AxisDistortionMatrixPointwise(
     res = mat.get_data()
 
     plt.figure()
-    ax = plt.subplot(111, xlabel="x", ylabel="y", title="")
+    ax = plt.subplot(111, xlabel="x", ylabel="y", title=f"Δx={xoffset}, Δy={yoffset}")
     ax.set_aspect("equal")
     # ax.grid()
     ax.minorticks_on()
@@ -79,6 +80,26 @@ def test_AxisDistortionMatrixPointwise(
     add_colorbar(cmbl)
 
     ax.plot(x_fine, y_fine, "+-", color="magenta")
+
+    if inverse:
+        y_top = edges[-1] + xoffset + yoffset
+        x_right = y_top
+
+        x_left = xoffset + yoffset
+        y_bottom = x_left
+    else:
+        y_bottom = yoffset - xoffset
+        x_left = - y_bottom
+        x_right = edges[-1] + x_left
+        y_top = edges[-1] + y_bottom
+
+    ax.axvline(x_left, color="magenta", linestyle="dotted", alpha=0.5)
+    ax.axvline(x_right, color="magenta", linestyle="dashed", alpha=0.5)
+    ax.axhline(y_bottom, color="magenta", linestyle="dotted", alpha=0.5)
+    ax.axhline(y_top, color="magenta", linestyle="dashed", alpha=0.5)
+
+    print(f"{x_left=} {x_right=} {y_bottom=} {y_top=}")
+
     plt.savefig(f"output/{testname}-plot.pdf")
 
     ressum = res.sum(axis=0)
@@ -90,17 +111,29 @@ def test_AxisDistortionMatrixPointwise(
     assert (0.0 <= res).all() and (res <= 1.0).all()
     assert (0.0 <= ressum).all() and (ressum <= 1.0).all()
 
-    # xfirst = x_fine[0]
-    # xlast = x_fine[-1]
+    xfirst = max(x_left, edges[0], x_fine[0])
+    xlast = min(x_right, edges[-1], x_fine[-1])
+    if inverse:
+        yfirst = max(y_bottom, edges[0], y_fine[-1])
+        ylast = min(y_top, edges[-1], y_fine[0])
+    else:
+        yfirst = max(y_bottom, edges[0], y_fine[0])
+        ylast = min(y_top, edges[-1], y_fine[-1])
 
-    # ixfirst = digitize(xfirst, edges, right=False)
-    # ixlast = digitize(xlast, edges, right=True) - 1
-    # if inverse:
-    #     ixlast -= int(rint(xoffset))
-    # else:
-    #     ixlast -= int(rint(yoffset))
-    # if ixlast > ixfirst:
-    #     assert (ressum[ixfirst + 1 : ixlast] == 1.0).all()
+    ixfirst = digitize(xfirst, edges, right=False)-1
+    ixlast = digitize(xlast, edges, right=False)-1
+
+    if xfirst>edges[0] and xfirst%1>0:
+        ixfirst+=1
+
+    print(f"Check {ixfirst}:{ixlast}, x {xfirst} {xlast} y {yfirst} {ylast}")
+    if ixlast > ixfirst:
+        check = ressum[ixfirst : ixlast]
+        print(f"Size: {check.size}")
+        print(check, (check == 1.0).all())
+        assert (check == 1.0).all()
+    else:
+        assert (res==0.0).all()
 
     plt.close()
 
@@ -118,10 +151,8 @@ def test_AxisDistortionMatrixPointwise(
         [0, 0, 0, 0, 0],
     ),
 )
-# @mark.parametrize("nsegments", (10, 21, 4))
-@mark.parametrize("nsegments", (21,))
-# @mark.parametrize("dtype", ("d", "f"))
-@mark.parametrize("dtype", ("d",))
+@mark.parametrize("nsegments", (10, 21, 4))
+@mark.parametrize("dtype", ("d", "f"))
 def test_AxisDistortionMatrixPointwise_pol3(
     dtype: str,
     nsegments: int,
@@ -138,7 +169,7 @@ def test_AxisDistortionMatrixPointwise_pol3(
     poly_coeffs = polyfit([0, 3, 5, 7, 10], poly_points, deg=3)
     poly = poly1d(poly_coeffs)
     x_fine = linspace(edges[0], edges[-1], nsegments + 1, dtype=dtype)
-    y_fine = poly(x_fine) + yoffset
+    y_fine = (poly(x_fine) + yoffset).astype(dtype)
     x_fine += xoffset
     if inverse:
         y_fine[:] = y_fine[::-1]
@@ -156,7 +187,7 @@ def test_AxisDistortionMatrixPointwise_pol3(
         mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)")
 
         Edges >> mat.inputs["EdgesOriginal"]
-        Edges >> mat.inputs["EdgesTarget"]
+        EdgesModified >> mat.inputs["EdgesTarget"]
 
         Distortion >> mat.inputs["DistortionOriginal"]
         DistortionModified >> mat.inputs["DistortionTarget"]
