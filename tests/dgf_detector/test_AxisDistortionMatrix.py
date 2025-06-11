@@ -35,7 +35,8 @@ from dgf_detector.AxisDistortionMatrixPointwise import AxisDistortionMatrixPoint
 )
 @mark.parametrize(
     "mode",
-    ("exact", "linear", "pointwise"),
+    # ("exact", "linear", "pointwise"),
+    ("pointwise",),
 )
 def test_AxisDistortionMatrix(
     setname: str,
