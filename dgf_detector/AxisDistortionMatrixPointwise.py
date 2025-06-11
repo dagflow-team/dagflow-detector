@@ -147,11 +147,11 @@ def _axisdistortion_pointwise_python(
     last_x = distortion_original[idx_last_point]
 
     # fmt: off
-    print(                                                                                 # debug
-        f"np {distortion_original.size} nex {edges_original.size} ney {edges_target.size}" # debug
-        " "                                                                                # debug
-        f"nbx {edges_original.size-1} nby {edges_target.size-1}"                           # debug
-    )                                                                                      # debug
+    # print(                                                                                 # debug
+    #     f"np {distortion_original.size} nex {edges_original.size} ney {edges_target.size}" # debug
+    #     " "                                                                                # debug
+    #     f"nbx {edges_original.size-1} nby {edges_target.size-1}"                           # debug
+    # )                                                                                      # debug
     # fmt: on
     large_negative_number = -1e30
     large_positive_number = -large_negative_number
@@ -200,7 +200,7 @@ def _axisdistortion_pointwise_python(
         skip_incomplete_x = (x0!=left_x) & (y0>bottom_y) & (y0<top_y)
     width_x_full = right_x - left_x
 
-    print(f"start ix {bin_idx_x} iy {bin_idx_y}")  # debug
+    # print(f"start ix {bin_idx_x} iy {bin_idx_y}")                                          # debug
 
     did_advance = True
     is_inside_limits = False
@@ -264,43 +264,43 @@ def _axisdistortion_pointwise_python(
             & (bin_idx_y >= 0)
             & (bin_idx_y < n_bins_y)
         )
-        if debug_is_inside_limits:                                                         # debug
-            debug_dx_fine = right - left                                                   # debug
-            debug_dx_coarse = right_x - left_x                                             # debug
-            debug_weight = debug_dx_fine / debug_dx_coarse                                 # debug
-        else:                                                                              # debug
-            debug_dx_fine = -1                                                             # debug
-            debug_dx_coarse = -1                                                           # debug
-            debug_weight = -1                                                              # debug
-        print(                                                                             # debug
-            f"{debug_is_inside_limits and 'n' or 'i'} "                                    # debug
-            f"seg {idx: 4d}: x {x0:0.2g},{x1:0.2g} → y {y0:0.2g},{y1:0.2g}"                # debug
-            " "                                                                            # debug
-            f"ex {bin_idx_x: 2d}: {left_x:0.2g}→{right_x:0.2g}"                            # debug
-            " "                                                                            # debug
-            f"ey {bin_idx_y: 2d}: {bottom_y:0.2g}→{top_y:0.2g}"                            # debug
-            " "                                                                            # debug
-            f"p{passed_any:d} "                                                            # debug
-            f"X{passed_x:d}{passed_x_first:d} "                                            # debug
-            f"Y{passed_top_y:d}{passed_top_y_first:d} "                                    # debug
-            f"y{passed_bottom_y:d}{passed_bottom_y_first:d}"                               # debug
-            " "                                                                            # debug
-            f"fn {left:0.2g}→{right:0.2g}={debug_dx_fine:0.2g}"                            # debug
-            " "                                                                            # debug
-            f"cs {left_x:0.2g}→{right_x:0.2g}={debug_dx_coarse:0.2g}"                      # debug
-            " "                                                                            # debug
-            f"w {debug_weight}"                                                            # debug
-            " "                                                                            # debug
-            f"[{bin_idx_y}, {bin_idx_x}]"                                                  # debug
-            " "                                                                            # debug
-            f"sk {skip_incomplete_x:d}"                                                    # debug
-        )                                                                                  # debug
+    #     if debug_is_inside_limits:                                                         # debug
+    #         debug_dx_fine = right - left                                                   # debug
+    #         debug_dx_coarse = right_x - left_x                                             # debug
+    #         debug_weight = debug_dx_fine / debug_dx_coarse                                 # debug
+    #     else:                                                                              # debug
+    #         debug_dx_fine = -1                                                             # debug
+    #         debug_dx_coarse = -1                                                           # debug
+    #         debug_weight = -1                                                              # debug
+    #     print(                                                                             # debug
+    #         f"{debug_is_inside_limits and 'n' or 'i'} "                                    # debug
+    #         f"seg {idx: 4d}: x {x0:0.2g},{x1:0.2g} → y {y0:0.2g},{y1:0.2g}"                # debug
+    #         " "                                                                            # debug
+    #         f"ex {bin_idx_x: 2d}: {left_x:0.2g}→{right_x:0.2g}"                            # debug
+    #         " "                                                                            # debug
+    #         f"ey {bin_idx_y: 2d}: {bottom_y:0.2g}→{top_y:0.2g}"                            # debug
+    #         " "                                                                            # debug
+    #         f"p{passed_any:d} "                                                            # debug
+    #         f"X{passed_x:d}{passed_x_first:d} "                                            # debug
+    #         f"Y{passed_top_y:d}{passed_top_y_first:d} "                                    # debug
+    #         f"y{passed_bottom_y:d}{passed_bottom_y_first:d}"                               # debug
+    #         " "                                                                            # debug
+    #         f"fn {left:0.2g}→{right:0.2g}={debug_dx_fine:0.2g}"                            # debug
+    #         " "                                                                            # debug
+    #         f"cs {left_x:0.2g}→{right_x:0.2g}={debug_dx_coarse:0.2g}"                      # debug
+    #         " "                                                                            # debug
+    #         f"w {debug_weight}"                                                            # debug
+    #         " "                                                                            # debug
+    #         f"[{bin_idx_y}, {bin_idx_x}]"                                                  # debug
+    #         " "                                                                            # debug
+    #         f"sk {skip_incomplete_x:d}"                                                    # debug
+    #     )                                                                                  # debug
         # fmt: on
 
         if not passed_any:
             idx += 1
             if idx >= idx_last_point:
-                print("break idx")  # debug
+    #             print("break idx")                                                         # debug
                 break
 
             x0 = distortion_original[idx]
@@ -332,13 +332,13 @@ def _axisdistortion_pointwise_python(
         if passed_x_first:
             bin_idx_x += 1
             if bin_idx_x >= n_bins_x:
-                print("break idx x")  # debug
+    #             print("break idx x")                                                       # debug
                 break
 
             left_x = edges_original[bin_idx_x]
             did_advance = True
             if left_x > last_x:
-                print("break x")  # debug
+    #             print("break x")                                                           # debug
                 break
 
             right_x = edges_original[bin_idx_x + 1]
@@ -367,8 +367,8 @@ def _axisdistortion_pointwise_python(
                 continue
             else:
                 bottom_y = large_negative_number
-    else:  # debug
-        print("break due to lack of advancement")  # debug
+    # else:                                                                                  # debug
+    #     print("break due to lack of advancement")                                          # debug
 
 
 _axisdistortion_pointwise_numba: Callable[
