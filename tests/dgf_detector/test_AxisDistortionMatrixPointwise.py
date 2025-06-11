@@ -1,26 +1,11 @@
-from typing import Literal
-
 from matplotlib import pyplot as plt
-from numpy import (
-    allclose,
-    array,
-    digitize,
-    fabs,
-    finfo,
-    linspace,
-    ma,
-    poly1d,
-    polyfit,
-    rint,
-)
+from numpy import array, digitize, linspace, ma, poly1d, polyfit
+from numpy.typing import ArrayLike
 from pytest import mark
 
 from dagflow.core.graph import Graph
 from dagflow.lib.common import Array
-from dagflow.plot.graphviz import savegraph
 from dagflow.plot.plot import add_colorbar
-from dgf_detector.AxisDistortionMatrix import AxisDistortionMatrix
-from dgf_detector.AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
 from dgf_detector.AxisDistortionMatrixPointwise import AxisDistortionMatrixPointwise
 
 
@@ -58,7 +43,7 @@ def test_AxisDistortionMatrixPointwise(
         mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)")
 
         Edges >> mat.inputs["EdgesOriginal"]
-        Edges >> mat.inputs["EdgesTarget"]
+        EdgesModified >> mat.inputs["EdgesTarget"]
 
         Distortion >> mat.inputs["DistortionOriginal"]
         DistortionModified >> mat.inputs["DistortionTarget"]
@@ -89,7 +74,7 @@ def test_AxisDistortionMatrixPointwise(
         y_bottom = x_left
     else:
         y_bottom = yoffset - xoffset
-        x_left = - y_bottom
+        x_left = -y_bottom
         x_right = edges[-1] + x_left
         y_top = edges[-1] + y_bottom
 
@@ -120,20 +105,20 @@ def test_AxisDistortionMatrixPointwise(
         yfirst = max(y_bottom, edges[0], y_fine[0])
         ylast = min(y_top, edges[-1], y_fine[-1])
 
-    ixfirst = digitize(xfirst, edges, right=False)-1
-    ixlast = digitize(xlast, edges, right=False)-1
+    ixfirst = digitize(xfirst, edges, right=False) - 1
+    ixlast = digitize(xlast, edges, right=False) - 1
 
-    if xfirst>edges[0] and xfirst%1>0:
-        ixfirst+=1
+    if xfirst > edges[0] and xfirst % 1 > 0:
+        ixfirst += 1
 
     print(f"Check {ixfirst}:{ixlast}, x {xfirst} {xlast} y {yfirst} {ylast}")
     if ixlast > ixfirst:
-        check = ressum[ixfirst : ixlast]
+        check = ressum[ixfirst:ixlast]
         print(f"Size: {check.size}")
         print(check, (check == 1.0).all())
         assert (check == 1.0).all()
     else:
-        assert (res==0.0).all()
+        assert (res == 0.0).all()
 
     plt.close()
 
@@ -159,7 +144,7 @@ def test_AxisDistortionMatrixPointwise_pol3(
     inverse: bool,
     xoffset: float | int,
     yoffset: float | int,
-    poly_points: list[int | float],
+    poly_points: ArrayLike,
     testname: str,
 ):
     nbins = 10
