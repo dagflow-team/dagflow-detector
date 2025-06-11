@@ -107,7 +107,6 @@ class AxisDistortionMatrixPointwise(Node):
         edges_target = self._edges_target.parent_output
         self._result.dd.axes_edges = (edges_target, edges_original)
         self.function = self._functions_dict["numba"]
-        self.function = self._functions_dict["python"]
 
 
 @njit
