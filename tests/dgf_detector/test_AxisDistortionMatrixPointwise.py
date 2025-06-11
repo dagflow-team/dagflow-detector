@@ -1,5 +1,5 @@
 from matplotlib import pyplot as plt
-from numpy import array, digitize, linspace, ma, poly1d, polyfit
+from numpy import allclose, array, digitize, linspace, ma, poly1d, polyfit
 from numpy.typing import ArrayLike
 from pytest import mark
 
@@ -30,8 +30,8 @@ def test_AxisDistortionMatrixPointwise(
     if inverse:
         y_fine[:] = y_fine[::-1]
 
-    print(x_fine)
-    print(y_fine)
+    # print(x_fine)
+    # print(y_fine)
 
     with Graph(close_on_exit=True) as graph:
         Edges = Array("Edges", edges, mode="fill")
@@ -83,12 +83,12 @@ def test_AxisDistortionMatrixPointwise(
     ax.axhline(y_bottom, color="magenta", linestyle="dotted", alpha=0.5)
     ax.axhline(y_top, color="magenta", linestyle="dashed", alpha=0.5)
 
-    print(f"{x_left=} {x_right=} {y_bottom=} {y_top=}")
+    # print(f"{x_left=} {x_right=} {y_bottom=} {y_top=}")
 
     plt.savefig(f"output/{testname}-plot.pdf")
 
     ressum = res.sum(axis=0)
-    print("Obtained matrix sum:\n", ressum)
+    # print("Obtained matrix sum:\n", ressum)
 
     # plt.show()
 
@@ -98,12 +98,12 @@ def test_AxisDistortionMatrixPointwise(
 
     xfirst = max(x_left, edges[0], x_fine[0])
     xlast = min(x_right, edges[-1], x_fine[-1])
-    if inverse:
-        yfirst = max(y_bottom, edges[0], y_fine[-1])
-        ylast = min(y_top, edges[-1], y_fine[0])
-    else:
-        yfirst = max(y_bottom, edges[0], y_fine[0])
-        ylast = min(y_top, edges[-1], y_fine[-1])
+    # if inverse:
+    #     yfirst = max(y_bottom, edges[0], y_fine[-1])
+    #     ylast = min(y_top, edges[-1], y_fine[0])
+    # else:
+    #     yfirst = max(y_bottom, edges[0], y_fine[0])
+    #     ylast = min(y_top, edges[-1], y_fine[-1])
 
     ixfirst = digitize(xfirst, edges, right=False) - 1
     ixlast = digitize(xlast, edges, right=False) - 1
@@ -111,12 +111,16 @@ def test_AxisDistortionMatrixPointwise(
     if xfirst > edges[0] and xfirst % 1 > 0:
         ixfirst += 1
 
-    print(f"Check {ixfirst}:{ixlast}, x {xfirst} {xlast} y {yfirst} {ylast}")
+    # print(f"Check {ixfirst}:{ixlast}, x {xfirst} {xlast} y {yfirst} {ylast}")
     if ixlast > ixfirst:
         check = ressum[ixfirst:ixlast]
-        print(f"Size: {check.size}")
-        print(check, (check == 1.0).all())
-        assert (check == 1.0).all()
+        # print(f"Size: {check.size}")
+        # print(check, (check == 1.0).all())
+
+        if dtype == "d":
+            assert (check == 1.0).all()
+        else:
+            assert allclose(check, 1.0, atol=1.0e-7)
     else:
         assert (res == 0.0).all()
 
@@ -197,11 +201,17 @@ def test_AxisDistortionMatrixPointwise_pol3(
     plt.savefig(f"output/{testname}-plot.pdf")
 
     ressum = res.sum(axis=0)
-    print("Obtained matrix sum:\n", ressum)
+    # print("Obtained matrix sum:\n", ressum)
 
     # plt.show()
 
-    assert (0.0 <= res).all() and (res <= 1.0).all()
-    assert (0.0 <= ressum).all() and (ressum <= 1.0).all()
+    assert (0.0 <= res).all()
+    assert (0.0 <= ressum).all()
+    if dtype=="d":
+        assert (res <= 1.0).all()
+        assert (ressum <= 1.0).all()
+    else:
+        assert (res <= 1.0+2e-7).all()
+        assert (ressum <= 1.0+2e-7).all()
 
     plt.close()
