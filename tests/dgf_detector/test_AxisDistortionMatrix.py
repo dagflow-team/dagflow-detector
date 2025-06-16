@@ -1,12 +1,14 @@
+from typing import Literal
+
 from numpy import allclose, array, finfo
 from pytest import mark
 
 from dagflow.core.graph import Graph
 from dagflow.lib.common import Array
 from dagflow.plot.graphviz import savegraph
-
 from dgf_detector.AxisDistortionMatrix import AxisDistortionMatrix
 from dgf_detector.AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
+from dgf_detector.AxisDistortionMatrixPointwise import AxisDistortionMatrixPointwise
 
 
 @mark.parametrize(
@@ -32,14 +34,16 @@ from dgf_detector.AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
     ),
 )
 @mark.parametrize(
-    "linear",
-    (
-        False,
-        True,
-    ),
+    "mode",
+    # ("exact", "linear", "pointwise"),
+    ("pointwise",),
 )
-def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
-    test_sets_current = test_sets[f"{'' if linear else 'non'}linear"]
+def test_AxisDistortionMatrix(
+    setname: str,
+    dtype: str,
+    mode: Literal["exact", "linear", "pointwise"],
+):
+    test_sets_current = test_sets[mode]
     edgesset = test_sets_current[setname]
     edges = array(edgesset["edges"], dtype=dtype)
     edges_modified = array(edgesset["edges_modified"], dtype=dtype)
@@ -57,20 +61,35 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
     with Graph(close_on_exit=True) as graph:
         Edges = Array("Edges", edges, mode="fill")
         EdgesModified = Array("Edges modified", edges_modified, mode="fill")
-        if not linear:
-            EdgesBackward = Array("Edges, projected backward", edges_backward, mode="fill")
+        if mode == "exact":
+            EdgesBackward = Array(
+                "Edges, projected backward", edges_backward, mode="fill"
+            )
 
-        if linear:
-            mat = AxisDistortionMatrixLinear("LSNL matrix (linear)")
-        else:
-            mat = AxisDistortionMatrix("LSNL matrix")
+        match mode:
+            case "linear":
+                mat = AxisDistortionMatrixLinear("LSNL matrix (linear)")
 
-        Edges >> mat.inputs["EdgesOriginal"]
-        Edges >> mat.inputs["EdgesTarget"]
-        EdgesModified >> mat.inputs["EdgesModified"]
+                Edges >> mat.inputs["EdgesOriginal"]
+                Edges >> mat.inputs["EdgesTarget"]
+                EdgesModified >> mat.inputs["EdgesModified"]
+            case "exact":
+                mat = AxisDistortionMatrix("LSNL matrix")
 
-        if not linear:
-            EdgesBackward >> mat.inputs["EdgesModifiedBackwards"]
+                Edges >> mat.inputs["EdgesOriginal"]
+                Edges >> mat.inputs["EdgesTarget"]
+                EdgesModified >> mat.inputs["EdgesModified"]
+                EdgesBackward >> mat.inputs["EdgesModifiedBackwards"]
+            case "pointwise":
+                mat = AxisDistortionMatrixPointwise("LSNL matrix (pointwise)")
+
+                Edges >> mat.inputs["EdgesOriginal"]
+                Edges >> mat.inputs["EdgesTarget"]
+
+                Edges >> mat.inputs["DistortionOriginal"]
+                EdgesModified >> mat.inputs["DistortionTarget"]
+            case _:
+                assert False
 
     res = mat.get_data()
 
@@ -78,7 +97,10 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
     print("Obtained matrix:\n", res)
     print("Obtained matrix sum:\n", ressum)
 
-    atol = 0 if dtype == "d" else finfo(dtype).resolution * 0.5
+    if mode == "pointwise":
+        atol = finfo(dtype).resolution * 0.5
+    else:
+        atol = 0 if dtype == "d" else finfo(dtype).resolution * 0.5
     assert allclose(res, desired, atol=atol, rtol=0)
 
     idxstart, idxend = 0, nbins
@@ -92,7 +114,10 @@ def test_AxisDistortionMatrix(setname: str, dtype: str, linear: bool):
     assert out_edges[0] is out_edges[1]
     assert out_edges[0] is Edges.outputs[0]
 
-    savegraph(graph, f"output/test_AxisDistortionMatrix{linear and 'Linear' or ''}_{dtype}.png")
+    savegraph(
+        graph,
+        f"output/test_AxisDistortionMatrix{mode.capitalize()}_{dtype}.png",
+    )
 
 
 # fmt: off
@@ -241,7 +266,7 @@ test_sets = {
                     ]
                 ),
         },
-        "nonlinear": {
+        "exact": {
             'test1': dict(
                 # from:           0         1    2              3              4
                 edges          = [1.0,      2.0, 3.0,           4.0,           5.0, ],
@@ -386,3 +411,4 @@ test_sets = {
                 ),
         }
     }
+test_sets["pointwise"] = test_sets["linear"]

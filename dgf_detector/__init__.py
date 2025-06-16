@@ -1,5 +1,6 @@
 from .AxisDistortionMatrix import AxisDistortionMatrix
 from .AxisDistortionMatrixLinear import AxisDistortionMatrixLinear
+from .AxisDistortionMatrixPointwise import AxisDistortionMatrixPointwise
 from .EnergyResolution import EnergyResolution
 from .EnergyResolutionMatrixBC import EnergyResolutionMatrixBC
 from .EnergyResolutionSigmaRelABC import EnergyResolutionSigmaRelABC
